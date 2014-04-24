@@ -1,5 +1,5 @@
-#include <audacious/i18n.h>
-#include <audacious/plugin.h>
+#include <libaudcore/i18n.h>
+#include <libaudcore/plugin.h>
 
 #include "adplug-xmms.h"
 static const char * fmts[] =

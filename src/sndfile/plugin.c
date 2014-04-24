@@ -45,9 +45,9 @@
 
 #include <sndfile.h>
 
-#include <audacious/input.h>
-#include <audacious/plugin.h>
-#include <audacious/i18n.h>
+#include <libaudcore/input.h>
+#include <libaudcore/plugin.h>
+#include <libaudcore/i18n.h>
 #include <libaudcore/audstrings.h>
 
 /* Virtual file access wrappers for libsndfile

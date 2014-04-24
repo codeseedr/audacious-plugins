@@ -23,7 +23,7 @@
 #include <stdint.h>
 
 #include <gtk/gtk.h>
-#include <audacious/types.h>
+#include <libaudcore/core.h>
 
 /* menus.c */
 GtkWidget * make_menu_bar (GtkAccelGroup * accel);
@@ -46,5 +46,6 @@ void show_hide_statusbar (void);
 void popup_menu_rclick (unsigned button, uint32_t time);
 void popup_menu_tab (unsigned button, uint32_t time, int playlist);
 void activate_search_tool (void);
+void update_step_size (void);
 
 #endif

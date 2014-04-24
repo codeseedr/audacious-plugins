@@ -19,11 +19,9 @@
  */
 
 
-#include <audacious/i18n.h>
-#include <audacious/input.h>
-#include <audacious/misc.h>
-#include <audacious/plugin.h>
-#include <audacious/debug.h>
+#include <libaudcore/i18n.h>
+#include <libaudcore/input.h>
+#include <libaudcore/plugin.h>
 
 #include "vtx.h"
 #include "ayemu.h"

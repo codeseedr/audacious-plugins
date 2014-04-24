@@ -25,8 +25,8 @@
 
 #include <glib.h>
 
-#include <audacious/debug.h>
-#include <audacious/i18n.h>
+#include <libaudcore/runtime.h>
+#include <libaudcore/i18n.h>
 #include <libaudcore/audstrings.h>
 
 #include "flacng.h"

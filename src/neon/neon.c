@@ -17,6 +17,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
+#include <inttypes.h>
 #include <stdint.h>
 #include <string.h>
 
@@ -28,9 +29,9 @@
 
 #include "neon.h"
 
-#include <audacious/i18n.h>
-#include <audacious/misc.h>
-#include <audacious/plugin.h>
+#include <libaudcore/i18n.h>
+#include <libaudcore/runtime.h>
+#include <libaudcore/plugin.h>
 #include <libaudcore/audstrings.h>
 
 #include <ne_socket.h>
@@ -357,7 +358,7 @@ static int open_request (struct neon_handle * handle, uint64_t startbyte)
         handle->request = ne_request_create (handle->session, "GET", handle->purl->path);
 
     if (startbyte > 0)
-        ne_print_request_header (handle->request, "Range", "bytes=%ld-", startbyte);
+        ne_print_request_header (handle->request, "Range", "bytes=%"PRIu64"-", startbyte);
 
     ne_print_request_header (handle->request, "Icy-MetaData", "1");
 
@@ -958,7 +959,7 @@ int neon_vfs_fseek_impl (VFSFile * file, int64_t offset, int whence)
     if (newpos && newpos >= content_length)
     {
         _ERROR ("<%p> Can not seek beyond end of stream (%ld >= %ld)",
-         (void *) h, newpos, content_length);
+         (void *) h, (long) newpos, (long) content_length);
         return -1;
     }
 

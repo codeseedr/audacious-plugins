@@ -21,10 +21,10 @@
 
 #include <gtk/gtk.h>
 
-#include <audacious/drct.h>
-#include <audacious/i18n.h>
-#include <audacious/misc.h>
-#include <audacious/playlist.h>
+#include <libaudcore/drct.h>
+#include <libaudcore/i18n.h>
+#include <libaudcore/runtime.h>
+#include <libaudcore/playlist.h>
 #include <libaudcore/audstrings.h>
 #include <libaudgui/libaudgui.h>
 #include <libaudgui/libaudgui-gtk.h>
@@ -81,16 +81,8 @@ static void set_length (GValue * value, int list, int row)
     int len = aud_playlist_entry_get_length (list, row, TRUE);
     if (len)
     {
-        len /= 1000;
-
         char s[16];
-        if (len < 3600)
-            snprintf (s, sizeof s, aud_get_bool (NULL, "leading_zero") ?
-             "%02d:%02d" : "%d:%02d", len / 60, len % 60);
-        else
-            snprintf (s, sizeof s, "%d:%02d:%02d", len / 3600, (len / 60) % 60,
-             len % 60);
-
+        str_format_time (s, sizeof s, len);
         g_value_set_string (value, s);
     }
     else

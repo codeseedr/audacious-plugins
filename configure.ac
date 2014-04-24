@@ -5,8 +5,8 @@ dnl ***
 dnl Initialize
 dnl ==========
 AC_PREREQ([2.59])
-AC_INIT([audacious-plugins], [3.5-devel])
-AC_COPYRIGHT([(C) 2005-2013 Audacious Team])
+AC_INIT([audacious-plugins], [3.6-devel])
+AC_COPYRIGHT([(C) 2005-2014 Audacious Team])
 
 AC_DEFINE_UNQUOTED([PACKAGE], "$PACKAGE_NAME", [Name of package])
 AC_DEFINE_UNQUOTED([VERSION], "$PACKAGE_VERSION", [Version number of package])
@@ -35,9 +35,9 @@ LIBS="$LIBS $LIBINTL"
 dnl Check for Audacious
 dnl ===================
 
-PKG_CHECK_MODULES(AUDACIOUS, [audacious >= 3.4],
+PKG_CHECK_MODULES(AUDACIOUS, [audacious >= 3.6],
     [],
-    [AC_MSG_ERROR([Cannot find Audacious 3.4; have you installed Audacious yet?])]
+    [AC_MSG_ERROR([Cannot find Audacious 3.6; have you installed Audacious yet?])]
 )
 
 CPPFLAGS="$CPPFLAGS $AUDACIOUS_CFLAGS"
@@ -46,16 +46,23 @@ LIBS="$LIBS $AUDACIOUS_LIBS"
 dnl Check for libxml2 (required to load XSPF playlists from previous versions)
 dnl ==========================================================================
 
-PKG_CHECK_MODULES([XML], [libxml-2.0])
+if test $HAVE_DARWIN = yes ; then
+    XML_LIBS="-lxml2"
+    XML_CFLAGS="-I/usr/include/libxml2"
+    AC_SUBST(XML_LIBS)
+    AC_SUBST(XML_CFLAGS)
+else
+    PKG_CHECK_MODULES([XML], [libxml-2.0])
+fi
 
 dnl Default Set of Plugins
 dnl ======================
 
-INPUT_PLUGINS="tonegen metronom vtx"
+INPUT_PLUGINS="tonegen metronom"
 OUTPUT_PLUGINS=""
-EFFECT_PLUGINS="compressor crossfade crystalizer ladspa mixer stereo_plugin voice_removal echo_plugin"
-GENERAL_PLUGINS="alarm albumart delete-files search-tool show-fm"
-VISUALIZATION_PLUGINS="blur_scope cairo-spectrum"
+EFFECT_PLUGINS="compressor crossfade crystalizer mixer stereo_plugin voice_removal echo_plugin"
+GENERAL_PLUGINS="show-fm"
+VISUALIZATION_PLUGINS=""
 CONTAINER_PLUGINS="asx asx3 audpl m3u pls xspf"
 TRANSPORT_PLUGINS="gio"
 
@@ -980,6 +987,94 @@ fi
 
 AC_SUBST(GL_LIBS)
 
+dnl VTX Decoder
+dnl =============
+
+AC_ARG_ENABLE(vtx,
+ [AS_HELP_STRING([--disable-vtx], [disable VTX Decoder])],
+ [enable_vtx=$enableval], [enable_vtx="yes"])
+
+if test "x$enable_vtx" != "xno"; then
+    INPUT_PLUGINS="$INPUT_PLUGINS vtx"
+fi
+
+dnl LADSPA Host
+dnl =============
+
+AC_ARG_ENABLE(ladspa,
+ [AS_HELP_STRING([--disable-ladspa], [disable LADSPA Host])],
+ [enable_ladspa=$enableval], [enable_ladspa="yes"])
+
+if test "x$enable_ladspa" != "xno"; then
+    EFFECT_PLUGINS="$EFFECT_PLUGINS ladspa"
+fi
+
+dnl Blur Scope
+dnl =============
+
+AC_ARG_ENABLE(blur_scope,
+ [AS_HELP_STRING([--disable-blur-scope], [disable Blur Scope])],
+ [enable_blur_scope=$enableval], [enable_blur_scope="yes"])
+
+if test "x$enable_blur_scope" != "xno"; then
+    VISUALIZATION_PLUGINS="$VISUALIZATION_PLUGINS blur_scope"
+fi
+
+dnl Cairo Spectrum Analyzer
+dnl =============
+
+AC_ARG_ENABLE(cairo_spectrum,
+ [AS_HELP_STRING([--disable-cairo-spectrum], [disable Cairo Spectrum Analyzer])],
+ [enable_cairo_spectrum=$enableval], [enable_cairo_spectrum="yes"])
+
+if test "x$enable_cairo_spectrum" != "xno"; then
+    VISUALIZATION_PLUGINS="$VISUALIZATION_PLUGINS cairo-spectrum"
+fi
+
+dnl Alarm
+dnl =============
+
+AC_ARG_ENABLE(alarm,
+ [AS_HELP_STRING([--disable-alarm], [disable Alarm])],
+ [enable_alarm=$enableval], [enable_alarm="yes"])
+
+if test "x$enable_alarm" != "xno"; then
+    GENERAL_PLUGINS="$GENERAL_PLUGINS alarm"
+fi
+
+dnl Album Art
+dnl =============
+
+AC_ARG_ENABLE(albumart,
+ [AS_HELP_STRING([--disable-albumart], [disable Album Art])],
+ [enable_albumart=$enableval], [enable_albumart="yes"])
+
+if test "x$enable_albumart" != "xno"; then
+    GENERAL_PLUGINS="$GENERAL_PLUGINS albumart"
+fi
+
+dnl Delete Files
+dnl =============
+
+AC_ARG_ENABLE(delete_files,
+ [AS_HELP_STRING([--disable-delete-files], [disable Delete Files])],
+ [enable_delete_files=$enableval], [enable_delete_files="yes"])
+
+if test "x$enable_delete_files" != "xno"; then
+    GENERAL_PLUGINS="$GENERAL_PLUGINS delete-files"
+fi
+
+dnl Search Tool
+dnl =============
+
+AC_ARG_ENABLE(search_tool,
+ [AS_HELP_STRING([--disable-search-tool], [disable Search Tool])],
+ [enable_search_tool=$enableval], [enable_search_tool="yes"])
+
+if test "x$enable_search_tool" != "xno"; then
+    GENERAL_PLUGINS="$GENERAL_PLUGINS search-tool"
+fi
+
 dnl *** End of all plugin checks ***
 
 plugindir=`pkg-config audacious --variable=plugin_dir`
@@ -1071,15 +1166,16 @@ echo "  Nintendo DS audio (xsf):                $enable_xsf"
 echo "  AdLib synthesizer (adplug):             $have_adplug"
 echo "  WavPack 4.31+ (wavpack):                $have_wavpack"
 echo "  Metronom:                               yes"
+echo "  VTX Decoder:                            $enable_vtx"
 echo
 echo "  General"
 echo "  -------"
-echo "  Alarm:                                  yes"
-echo "  Album Art:                              yes"
-echo "  Delete from Filesystem:                 yes"
+echo "  Alarm:                                  $enable_alarm"
+echo "  Album Art:                              $enable_albumart"
+echo "  Delete from Filesystem:                 $enable_delete_files"
 echo "  Linux Infrared Remote Control (LIRC)    $have_lirc"
 echo "  MPRIS 2 Server:                         $have_mpris2"
-echo "  Search Tool:                            yes"
+echo "  Search Tool:                            $enable_search_tool"
 echo "  Show in File Manager:                   yes"
 echo "  Song Change:                            $have_songchange"
 echo "  Status Icon:                            $have_statusicon"
@@ -1098,7 +1194,7 @@ echo "  Crystalizer:                            yes"
 echo "  Dynamic Range Compressor:               yes"
 echo "  Echo/Surround:                          yes"
 echo "  Extra Stereo:                           yes"
-echo "  LADSPA Host:                            yes"
+echo "  LADSPA Host:                            $enable_ladspa"
 echo "  Voice Removal:                          yes"
 echo "  Bauer stereophonic-to-binaural (bs2b):  $have_bs2b"
 echo "  Sample Rate Converter (resample):       $have_resample"
@@ -1107,8 +1203,8 @@ echo "  SoX Resampler:                          $have_soxr"
 echo
 echo "  Visualization"
 echo "  -------------"
-echo "  Blur Scope:                             yes"
-echo "  Cairo Spectrum Analyzer:                yes"
+echo "  Blur Scope:                             $enable_blur_scope"
+echo "  Cairo Spectrum Analyzer:                $enable_cairo_spectrum"
 echo "  OpenGL Spectrum Analyzer:               $have_glspectrum"
 echo
 echo "  Transport"

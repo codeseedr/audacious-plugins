@@ -27,8 +27,8 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <audacious/plugin.h>
-#include <audacious/i18n.h>
+#include <libaudcore/plugin.h>
+#include <libaudcore/i18n.h>
 
 struct format_info {
     gint format;

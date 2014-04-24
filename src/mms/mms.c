@@ -26,9 +26,9 @@
 #include <libmms/mms.h>
 #include <libmms/mmsh.h>
 
-#include <audacious/debug.h>
-#include <audacious/i18n.h>
-#include <audacious/plugin.h>
+#include <libaudcore/runtime.h>
+#include <libaudcore/i18n.h>
+#include <libaudcore/plugin.h>
 
 typedef struct
 {

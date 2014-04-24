@@ -22,13 +22,14 @@
 
 #include <libnotify/notify.h>
 
-#include <audacious/i18n.h>
-#include <audacious/drct.h>
-#include <audacious/misc.h>
+#include <libaudcore/drct.h>
+#include <libaudcore/i18n.h>
+#include <libaudcore/interface.h>
+#include <libaudcore/runtime.h>
 
 static void show_cb (void)
 {
-    aud_interface_show (TRUE);
+    aud_ui_show (TRUE);
 }
 
 static void osd_setup (NotifyNotification *notification)

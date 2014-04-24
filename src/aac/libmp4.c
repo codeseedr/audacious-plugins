@@ -8,11 +8,10 @@
 #include <neaacdec.h>
 
 #include "mp4ff.h"
-#include "tagging.h"
 
-#include <audacious/input.h>
-#include <audacious/plugin.h>
-#include <audacious/i18n.h>
+#include <libaudcore/input.h>
+#include <libaudcore/plugin.h>
+#include <libaudcore/i18n.h>
 
 /*
  * BUFFER_SIZE is the highest amount of memory that can be pulled.

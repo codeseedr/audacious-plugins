@@ -42,12 +42,12 @@
 #include <gdk/gdkx.h>
 #include <gtk/gtk.h>
 
-#include <audacious/drct.h>
-#include <audacious/i18n.h>
-#include <audacious/misc.h>
-#include <audacious/plugin.h>
+#include <libaudcore/drct.h>
 #include <libaudcore/hook.h>
-#include <libaudgui/libaudgui.h>
+#include <libaudcore/i18n.h>
+#include <libaudcore/interface.h>
+#include <libaudcore/plugin.h>
+#include <libaudcore/runtime.h>
 
 #include "plugin.h"
 #include "gui.h"
@@ -244,16 +244,16 @@ gboolean handle_keyevent (EVENT event)
     }
 
     /* Open Jump-To-File dialog */
-    if (event == EVENT_JUMP_TO_FILE && ! aud_headless_mode ())
+    if (event == EVENT_JUMP_TO_FILE && ! aud_get_headless_mode ())
     {
-        audgui_jump_to_track ();
+        aud_ui_show_jump_to_song ();
         return TRUE;
     }
 
     /* Toggle Windows */
-    if (event == EVENT_TOGGLE_WIN && ! aud_headless_mode ())
+    if (event == EVENT_TOGGLE_WIN && ! aud_get_headless_mode ())
     {
-        aud_interface_show (! aud_interface_is_shown ());
+        aud_ui_show (! aud_ui_is_shown ());
         return TRUE;
     }
 
@@ -284,7 +284,7 @@ gboolean handle_keyevent (EVENT event)
 
     if (event == EVENT_RAISE)
     {
-        aud_interface_show (TRUE);
+        aud_ui_show (TRUE);
         return TRUE;
     }
 

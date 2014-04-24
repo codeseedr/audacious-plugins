@@ -18,10 +18,10 @@
 #include <gtk/gtk.h>
 
 //audacious includes
-#include <audacious/i18n.h>
-#include <audacious/misc.h>
-#include <audacious/debug.h>
-#include <audacious/preferences.h>
+#include <libaudcore/i18n.h>
+#include <libaudcore/preferences.h>
+#include <libaudcore/runtime.h>
+#include <libaudcore/tuple.h>
 
 #define SCROBBLER_API_KEY "4b4f73bda181868353f9b438604adf52"
 #define SCROBBLER_SHARED_SECRET "716cc0a784bb62835de5bd674e65eb57"
@@ -90,6 +90,6 @@ extern bool_t read_token(char **error_code, char **error_detail);
 extern bool_t read_session_key(char **error_code, char **error_detail);
 extern bool_t read_scrobble_result(char **error_code, char **error_detail, bool_t *ignored, char **ignored_code);
 
-//scrobbler.c //TODO: refactor this
-extern gchar *remove_tabs(const char *string);
+//scrobbler.c
+extern char *clean_string(char *string);
 #endif /* SCROBBLER_H_ */

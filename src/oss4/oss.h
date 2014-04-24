@@ -34,10 +34,8 @@
 #include <soundcard.h>
 #endif
 
-#include <audacious/plugin.h>
-#include <audacious/i18n.h>
-#include <audacious/debug.h>
-#include <audacious/misc.h>
+#include <libaudcore/plugin.h>
+#include <libaudcore/i18n.h>
 
 #define ERROR(...) \
 do { \
@@ -48,7 +46,7 @@ do { \
 #define ERROR_NOISY(...) \
 do { \
     SPRINTF(oss_error_buf, "OSS4 error: "__VA_ARGS__); \
-    aud_interface_show_error(oss_error_buf); \
+    aud_ui_show_error(oss_error_buf); \
     ERROR(__VA_ARGS__); \
 } while (0) \
 

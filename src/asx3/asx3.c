@@ -26,8 +26,8 @@
 #include <libxml/tree.h>
 #include <libxml/xmlsave.h>
 
-#include <audacious/i18n.h>
-#include <audacious/plugin.h>
+#include <libaudcore/i18n.h>
+#include <libaudcore/plugin.h>
 
 static int read_cb (void * file, char * buf, int len)
 {

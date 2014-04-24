@@ -21,10 +21,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <audacious/i18n.h>
-#include <audacious/misc.h>
-#include <audacious/plugin.h>
-#include <audacious/preferences.h>
+#include <libaudcore/i18n.h>
+#include <libaudcore/runtime.h>
+#include <libaudcore/plugin.h>
+#include <libaudcore/preferences.h>
 
 static bool_t init (void);
 static void cryst_start (int * channels, int * rate);

@@ -18,10 +18,14 @@
  */
 
 #include <gtk/gtk.h>
-#include <audacious/i18n.h>
+#include <libaudcore/i18n.h>
 #include <libaudgui/libaudgui.h>
 
 #include "callbacks.h"
+
+#if GTK_CHECK_VERSION (3, 12, 0)
+    #define gtk_widget_set_margin_right(w, m) gtk_widget_set_margin_end(w, m)
+#endif
 
 const gchar *help[] =
 {
@@ -124,7 +128,7 @@ static void config_dialog_response (GtkWidget *dialog, gint response)
 GtkWidget *create_config_dialog (void)
 {
     /* General */
-    GtkWidget *config_dialog, *content_area, *action_area, *notebook;
+    GtkWidget *config_dialog, *content_area, *notebook;
     GtkWidget *vbox, *hbox, *label, *frame, *grid;
     GtkAdjustment *adjustment;
 
@@ -175,9 +179,7 @@ GtkWidget *create_config_dialog (void)
     config_dialog = gtk_dialog_new_with_buttons (_("Alarm Settings"), NULL, 0,
      _("_OK"), GTK_RESPONSE_OK, _("_Cancel"), GTK_RESPONSE_CANCEL, NULL);
     gtk_dialog_set_default_response (GTK_DIALOG (config_dialog), GTK_RESPONSE_OK);
-    action_area = gtk_dialog_get_action_area (GTK_DIALOG (config_dialog));
     content_area = gtk_dialog_get_content_area (GTK_DIALOG (config_dialog));
-    gtk_container_set_border_width (GTK_CONTAINER (action_area), 12);
     notebook = gtk_notebook_new ();
     gtk_box_pack_start (GTK_BOX (content_area), notebook, TRUE, TRUE, 0);
 
@@ -416,12 +418,12 @@ GtkWidget *create_config_dialog (void)
     hbox = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 5);
     gtk_container_set_border_width (GTK_CONTAINER (frame), 10);
     gtk_container_set_border_width (GTK_CONTAINER (hbox), 8);
-    reminder_checkb = gtk_check_button_new_with_label (_("Use reminder"));
-    g_object_set_data (G_OBJECT (config_dialog), "reminder_cb", reminder_checkb);
     reminder_text = gtk_entry_new ();
+    reminder_checkb = gtk_check_button_new_with_label (_("enable"));
     g_object_set_data (G_OBJECT (config_dialog), "reminder_text", reminder_text);
+    g_object_set_data (G_OBJECT (config_dialog), "reminder_cb", reminder_checkb);
+    gtk_box_pack_start (GTK_BOX (hbox), reminder_text, TRUE, TRUE, 0);
     gtk_container_add (GTK_CONTAINER (hbox), reminder_checkb);
-    gtk_box_pack_end (GTK_BOX (hbox), reminder_text, TRUE, TRUE, 0);
     gtk_container_add (GTK_CONTAINER (frame), hbox);
     gtk_container_add (GTK_CONTAINER (vbox), frame);
 

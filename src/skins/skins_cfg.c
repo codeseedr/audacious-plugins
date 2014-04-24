@@ -22,10 +22,9 @@
 #include <string.h>
 #include <gtk/gtk.h>
 
-#include <audacious/debug.h>
-#include <audacious/i18n.h>
-#include <audacious/misc.h>
-#include <audacious/preferences.h>
+#include <libaudcore/i18n.h>
+#include <libaudcore/runtime.h>
+#include <libaudcore/preferences.h>
 #include <libaudcore/audstrings.h>
 
 #include "dnd.h"

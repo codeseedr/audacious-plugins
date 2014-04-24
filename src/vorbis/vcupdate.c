@@ -18,7 +18,6 @@
  *
  */
 
-#include <glib.h>
 #include <ogg/ogg.h>
 #include <vorbis/codec.h>
 #include <vorbis/vorbisfile.h>
@@ -26,12 +25,14 @@
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
-
 #include <unistd.h>
 
-#include <audacious/debug.h>
-#include <audacious/plugin.h>
-#include <audacious/i18n.h>
+#include <glib.h>
+#include <glib/gstdio.h>
+
+#include <libaudcore/runtime.h>
+#include <libaudcore/plugin.h>
+#include <libaudcore/i18n.h>
 #include <libaudcore/audstrings.h>
 
 #include "vorbis.h"
@@ -210,7 +211,7 @@ gboolean write_and_pivot_files (vcedit_state * state)
 
     vfs_fclose (temp_vfs);
 
-    if (unlink (temp) < 0)
+    if (g_unlink (temp) < 0)
         fprintf (stderr, "Failed to delete temp file: %s.\n", temp);
 
     g_free (temp);

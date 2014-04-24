@@ -36,12 +36,12 @@
 #include <glib.h>
 #include <lirc/lirc_client.h>
 
-#include <audacious/drct.h>
-#include <audacious/i18n.h>
-#include <audacious/misc.h>
-#include <audacious/playlist.h>
-#include <audacious/plugin.h>
-#include <audacious/preferences.h>
+#include <libaudcore/drct.h>
+#include <libaudcore/i18n.h>
+#include <libaudcore/runtime.h>
+#include <libaudcore/playlist.h>
+#include <libaudcore/plugin.h>
+#include <libaudcore/preferences.h>
 #include <libaudcore/hook.h>
 
 static gboolean lirc_input_callback (GIOChannel * source, GIOCondition condition, void * data);
@@ -261,7 +261,7 @@ static gboolean lirc_input_callback (GIOChannel * source, GIOCondition condition
             }
             else if (g_ascii_strcasecmp ("QUIT", c) == 0)
             {
-                aud_drct_quit ();
+                aud_quit ();
             }
             else if (g_ascii_strcasecmp ("MUTE", c) == 0)
             {

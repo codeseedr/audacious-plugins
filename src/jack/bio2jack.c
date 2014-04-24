@@ -76,35 +76,30 @@ static struct timeval timer_now;
 #endif
 
 #if TRACE_ENABLE
-#define TRACE(format,args...) fprintf(OUTFILE, "%s::%s(%d) "format, __FILE__, __FUNCTION__, __LINE__,##args);	\
-         fflush(OUTFILE);
+#define TRACE(format,args...) fprintf(OUTFILE, "%s::%s(%d) "format, __FILE__, __FUNCTION__, __LINE__,##args)
 #else
 #define TRACE(...)
 #endif
 
 #if DEBUG_OUTPUT
-#define DEBUG(format,args...) fprintf(OUTFILE, "%s::%s(%d) "format, __FILE__, __FUNCTION__, __LINE__,##args);	\
-         fflush(OUTFILE);
+#define DEBUG(format,args...) fprintf(OUTFILE, "%s::%s(%d) "format, __FILE__, __FUNCTION__, __LINE__,##args)
 #else
 #define DEBUG(...)
 #endif
 
 #if TRACE_CALLBACK
-#define CALLBACK_TRACE(format,args...) fprintf(OUTFILE, "%s::%s(%d) "format, __FILE__, __FUNCTION__, __LINE__,##args);	\
-         fflush(OUTFILE);
+#define CALLBACK_TRACE(format,args...) fprintf(OUTFILE, "%s::%s(%d) "format, __FILE__, __FUNCTION__, __LINE__,##args)
 #else
 #define CALLBACK_TRACE(...)
 #endif
 
 #if ENABLE_WARNINGS
-#define WARN(format,args...) fprintf(OUTFILE, "WARN: %s::%s(%d) "format, __FILE__,__FUNCTION__,__LINE__,##args);	\
-         fflush(OUTFILE);
+#define WARN(format,args...) fprintf(OUTFILE, "WARN: %s::%s(%d) "format, __FILE__,__FUNCTION__,__LINE__,##args)
 #else
 #define WARN(...)
 #endif
 
-#define ERR(format,args...) fprintf(OUTFILE, "ERR: %s::%s(%d) "format, __FILE__,__FUNCTION__,__LINE__,##args);	\
-         fflush(OUTFILE);
+#define ERR(format,args...) fprintf(OUTFILE, "ERR: %s::%s(%d) "format, __FILE__,__FUNCTION__,__LINE__,##args)
 
 #define min(a,b)   (((a) < (b)) ? (a) : (b))
 #define max(a,b)   (((a) < (b)) ? (b) : (a))
@@ -284,8 +279,7 @@ getDriver(int deviceID)
 #endif
   jack_driver_t *drv = &outDev[deviceID];
 
-  if(pthread_mutex_lock(&drv->mutex) != 0)
-    ERR("lock returned an error\n");
+  pthread_mutex_lock(&drv->mutex);
 
   /* should we try to restart the jack server? */
   if(drv->jackd_died && drv->client == 0)
@@ -351,8 +345,7 @@ releaseDriver(jack_driver_t * drv)
      TRACE("deviceID == %d\n", drv->deviceID);
      #endif
    */
-  if(pthread_mutex_unlock(&drv->mutex) != 0)
-    ERR("lock returned an error\n");
+  pthread_mutex_unlock(&drv->mutex);
 }
 
 
@@ -1536,6 +1529,7 @@ JACK_OpenEx(int *deviceID, unsigned int bits_per_channel,
   if(!drv)
   {
     ERR("no more devices available\n");
+    pthread_mutex_unlock(&device_mutex);
     return ERR_OPENING_JACK;
   }
 
@@ -2441,13 +2435,14 @@ JACK_GetMaxOutputBufferedBytes(int deviceID)
   jack_driver_t *drv = getDriver(deviceID);
   long return_val;
 
-  if(drv->pPlayPtr == 0 || drv->bytes_per_jack_output_frame == 0) return_val = 0;
-
   /* adjust from jack bytes to client bytes */
-  return_val =
-    (jack_ringbuffer_read_space(drv->pPlayPtr) +
-     jack_ringbuffer_write_space(drv->pPlayPtr)) /
-    drv->bytes_per_jack_output_frame * drv->bytes_per_output_frame;
+  if(drv->pPlayPtr == 0 || drv->bytes_per_jack_output_frame == 0)
+    return_val = 0;
+  else
+    return_val =
+      (jack_ringbuffer_read_space(drv->pPlayPtr) +
+       jack_ringbuffer_write_space(drv->pPlayPtr)) /
+      drv->bytes_per_jack_output_frame * drv->bytes_per_output_frame;
 
   releaseDriver(drv);
 
@@ -2463,13 +2458,14 @@ JACK_GetMaxInputBufferedBytes(int deviceID)
   jack_driver_t *drv = getDriver(deviceID);
   long return_val;
 
-  if(drv->pRecPtr == 0 || drv->bytes_per_jack_input_frame == 0) return_val = 0;
-
   /* adjust from jack bytes to client bytes */
-  return_val =
-    (jack_ringbuffer_read_space(drv->pRecPtr) +
-     jack_ringbuffer_write_space(drv->pRecPtr)) /
-    drv->bytes_per_jack_input_frame * drv->bytes_per_input_frame;
+  if(drv->pRecPtr == 0 || drv->bytes_per_jack_input_frame == 0)
+    return_val = 0;
+  else
+    return_val =
+      (jack_ringbuffer_read_space(drv->pRecPtr) +
+       jack_ringbuffer_write_space(drv->pRecPtr)) /
+      drv->bytes_per_jack_input_frame * drv->bytes_per_input_frame;
 
   releaseDriver(drv);
 

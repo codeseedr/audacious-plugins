@@ -24,8 +24,8 @@
 #include <math.h>
 #include <string.h>
 
-#include <audacious/i18n.h>
-#include <audacious/plugin.h>
+#include <libaudcore/i18n.h>
+#include <libaudcore/plugin.h>
 
 #include <gdk/gdk.h>
 #include <gtk/gtk.h>

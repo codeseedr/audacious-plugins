@@ -26,11 +26,11 @@
 
 #include <pulse/pulseaudio.h>
 
-#include <audacious/debug.h>
-#include <audacious/drct.h>
-#include <audacious/misc.h>
-#include <audacious/plugin.h>
-#include <audacious/i18n.h>
+#include <libaudcore/runtime.h>
+#include <libaudcore/drct.h>
+#include <libaudcore/runtime.h>
+#include <libaudcore/plugin.h>
+#include <libaudcore/i18n.h>
 
 #define ERROR(...) do {fprintf (stderr, "pulseaudio: " __VA_ARGS__); putchar ('\n');} while (0)
 

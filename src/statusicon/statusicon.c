@@ -22,13 +22,14 @@
 
 #include "statusicon.h"
 
-#include <audacious/drct.h>
-#include <audacious/i18n.h>
-#include <audacious/misc.h>
-#include <audacious/plugin.h>
-#include <audacious/plugins.h>
-#include <audacious/preferences.h>
+#include <libaudcore/drct.h>
+#include <libaudcore/i18n.h>
+#include <libaudcore/interface.h>
+#include <libaudcore/plugin.h>
+#include <libaudcore/plugins.h>
+#include <libaudcore/preferences.h>
 #include <libaudcore/hook.h>
+#include <libaudcore/runtime.h>
 #include <libaudgui/libaudgui.h>
 #include <libaudgui/libaudgui-gtk.h>
 #include <libaudgui/menu.h>
@@ -93,8 +94,8 @@ static gboolean si_cb_btpress(GtkStatusIcon * icon, GdkEventButton * event, gpoi
       {
           if (event->state & GDK_SHIFT_MASK)
               aud_drct_pl_next();
-          else if (! aud_headless_mode ())
-              aud_interface_show (! aud_interface_is_shown ());
+          else if (! aud_get_headless_mode ())
+              aud_ui_show (! aud_ui_is_shown ());
           break;
       }
 
@@ -266,8 +267,8 @@ static GtkWidget *si_smallmenu_create(void)
         {N_("_Stop"), "media-playback-stop", .func = aud_drct_stop},
         {N_("_Next"), "media-skip-forward", .func = aud_drct_pl_next},
         {.sep = TRUE},
-        {N_("Se_ttings ..."), "preferences-system", .func = aud_show_prefs_window},
-        {N_("_Quit"), "application-exit", .func = aud_drct_quit}
+        {N_("Se_ttings ..."), "preferences-system", .func = audgui_show_prefs_window},
+        {N_("_Quit"), "application-exit", .func = aud_quit}
     };
 
     GtkWidget *si_smenu = gtk_menu_new();
@@ -291,7 +292,7 @@ static void si_window_close(gpointer data, gpointer user_data)
     if (aud_get_bool ("statusicon", "close_to_tray"))
     {
         *handle = TRUE;
-        aud_interface_show (FALSE);
+        aud_ui_show (FALSE);
     }
 }
 
@@ -336,8 +337,8 @@ static void si_enable(gboolean enable)
          * by disabling the plugin while Audacious is closed to the tray. */
         extern GeneralPlugin _aud_plugin_self;
         PluginHandle *si = aud_plugin_by_header(&_aud_plugin_self);
-        if (! aud_plugin_get_enabled(si) && ! aud_headless_mode() && ! aud_interface_is_shown())
-            aud_interface_show(TRUE);
+        if (! aud_plugin_get_enabled(si) && ! aud_get_headless_mode() && ! aud_ui_is_shown())
+            aud_ui_show(TRUE);
 
         GtkWidget *si_smenu = g_object_get_data(G_OBJECT(si_applet), "smenu");
         si_popup_timer_stop(si_applet);   /* just in case the timer is active */

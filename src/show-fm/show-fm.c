@@ -4,11 +4,10 @@
 
 #include <glib.h>
 
-#include <audacious/i18n.h>
-#include <audacious/misc.h>
-#include <audacious/plugin.h>
-#include <audacious/playlist.h>
+#include <libaudcore/plugin.h>
+#include <libaudcore/playlist.h>
 #include <libaudcore/hook.h>
+#include <libaudcore/interface.h>
 #include <libaudcore/audstrings.h>
 #include <libaudgui/libaudgui-gtk.h>
 
@@ -55,8 +54,8 @@ static void show_playlist_entries(void)
 
         if (!filename)
         {
-            SPRINTF(error, _("Unable to show %s in File Manager: not a local file."), uri);
-            aud_interface_show_error(error);
+            SPRINTF(error, "Unable to show %s in File Manager: not a local file.", uri);
+            aud_ui_show_error(error);
         }
         else
         {
@@ -78,7 +77,7 @@ static bool_t init(void)
 {
     for (int i = 0; i < G_N_ELEMENTS (menus); i ++)
         aud_plugin_menu_add (menus[i], show_playlist_entries,
-            _("Show in File Manager"), "folder");
+            "Show in File Manager", "folder");
 
     return TRUE;
 }
@@ -91,7 +90,7 @@ static void cleanup(void)
 
 AUD_GENERAL_PLUGIN
 (
-    .name = N_("Show in File Manager"),
+    .name = "Show in File Manager",
     .domain = PACKAGE,
     .init = init,
     .cleanup = cleanup,

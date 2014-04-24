@@ -43,17 +43,15 @@
 
 #include <glib.h>
 
-#include <audacious/debug.h>
-#include <audacious/i18n.h>
-#include <audacious/input.h>
-#include <audacious/misc.h>
-#include <audacious/playlist.h>
-#include <audacious/plugin.h>
-#include <audacious/preferences.h>
 #include <libaudcore/audstrings.h>
 #include <libaudcore/hook.h>
-#include <libaudgui/libaudgui.h>
-#include <libaudgui/libaudgui-gtk.h>
+#include <libaudcore/i18n.h>
+#include <libaudcore/input.h>
+#include <libaudcore/interface.h>
+#include <libaudcore/playlist.h>
+#include <libaudcore/plugin.h>
+#include <libaudcore/preferences.h>
+#include <libaudcore/runtime.h>
 
 #define DEF_STRING_LEN 256
 
@@ -93,6 +91,7 @@ static void cdaudio_cleanup (void);
 static Tuple * make_tuple (const char * filename, VFSFile * file);
 static void scan_cd (void);
 static void refresh_trackinfo (bool_t warning);
+static void reset_trackinfo (void);
 static int calculate_track_length (int startlsn, int endlsn);
 static int find_trackno_from_filename (const char * filename);
 
@@ -164,7 +163,7 @@ static void cdaudio_error (const char * message_format, ...)
     msg = g_markup_vprintf_escaped (message_format, args);
     va_end (args);
 
-    aud_interface_show_error (msg);
+    aud_ui_show_error (msg);
     g_free (msg);
 }
 
@@ -390,24 +389,7 @@ static void cdaudio_cleanup (void)
 {
     pthread_mutex_lock (& mutex);
 
-    if (monitor_source)
-    {
-        g_source_remove (monitor_source);
-        monitor_source = 0;
-    }
-
-    if (pcdrom_drive != NULL)
-    {
-        cdda_close (pcdrom_drive);
-        pcdrom_drive = NULL;
-    }
-
-    if (trackinfo != NULL)
-    {
-        g_free (trackinfo);
-        trackinfo = NULL;
-    }
-
+    reset_trackinfo ();
     libcddb_shutdown ();
 
     pthread_mutex_unlock (& mutex);
@@ -416,17 +398,21 @@ static void cdaudio_cleanup (void)
 /* thread safe */
 static Tuple * make_tuple (const char * filename, VFSFile * file)
 {
-    Tuple *tuple = NULL;
-    int trackno;
+    bool_t whole_disk = ! strcmp (filename, "cdda://");
+    Tuple * tuple = NULL;
 
     pthread_mutex_lock (& mutex);
+
+    /* reset cached info when adding CD to the playlist */
+    if (whole_disk && ! playing)
+        reset_trackinfo ();
 
     if (trackinfo == NULL)
         refresh_trackinfo (TRUE);
     if (trackinfo == NULL)
         goto DONE;
 
-    if (!strcmp (filename, "cdda://"))
+    if (whole_disk)
     {
         tuple = tuple_new_from_filename (filename);
 
@@ -434,7 +420,7 @@ static Tuple * make_tuple (const char * filename, VFSFile * file)
         int i = 0;
 
         /* only add the audio tracks to the playlist */
-        for (trackno = firsttrackno; trackno <= lasttrackno; trackno++)
+        for (int trackno = firsttrackno; trackno <= lasttrackno; trackno++)
             if (cdda_track_audiop (pcdrom_drive, trackno))
                 subtunes[i ++] = trackno;
 
@@ -443,7 +429,7 @@ static Tuple * make_tuple (const char * filename, VFSFile * file)
         goto DONE;
     }
 
-    trackno = find_trackno_from_filename (filename);
+    int trackno = find_trackno_from_filename (filename);
 
     if (trackno < firsttrackno || trackno > lasttrackno)
     {
@@ -810,8 +796,6 @@ static void scan_cd (void)
 /* mutex must be locked */
 static void refresh_trackinfo (bool_t warning)
 {
-    trigger_monitor ();
-
     if (pcdrom_drive == NULL)
     {
         open_cd ();
@@ -834,15 +818,7 @@ static void refresh_trackinfo (bool_t warning)
                 cdaudio_error (_("Unsupported disk type."));
         }
 
-        /* reset libcdio, else it will not read a new disk correctly */
-        if (pcdrom_drive)
-        {
-            cdda_close (pcdrom_drive);
-            pcdrom_drive = NULL;
-        }
-
-        g_free (trackinfo);
-        trackinfo = NULL;
+        reset_trackinfo ();
         return;
     }
 
@@ -851,7 +827,29 @@ static void refresh_trackinfo (bool_t warning)
         g_free (trackinfo);
         trackinfo = NULL;
         scan_cd ();
+
+        if (trackinfo != NULL)
+            trigger_monitor ();
     }
+}
+
+/* mutex must be locked */
+static void reset_trackinfo (void)
+{
+    if (monitor_source)
+    {
+        g_source_remove (monitor_source);
+        monitor_source = 0;
+    }
+
+    if (pcdrom_drive != NULL)
+    {
+        cdda_close (pcdrom_drive);
+        pcdrom_drive = NULL;
+    }
+
+    g_free (trackinfo);
+    trackinfo = NULL;
 }
 
 /* thread safe (mutex may be locked) */

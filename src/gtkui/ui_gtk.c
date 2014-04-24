@@ -22,13 +22,13 @@
 #include <gdk/gdkkeysyms.h>
 #include <gtk/gtk.h>
 
-#include <audacious/debug.h>
-#include <audacious/drct.h>
-#include <audacious/i18n.h>
-#include <audacious/playlist.h>
-#include <audacious/plugin.h>
-#include <audacious/plugins.h>
-#include <audacious/misc.h>
+#include <libaudcore/runtime.h>
+#include <libaudcore/drct.h>
+#include <libaudcore/i18n.h>
+#include <libaudcore/playlist.h>
+#include <libaudcore/plugin.h>
+#include <libaudcore/plugins.h>
+#include <libaudcore/runtime.h>
 #include <libaudcore/audstrings.h>
 #include <libaudcore/hook.h>
 #include <libaudgui/libaudgui.h>
@@ -54,6 +54,7 @@ static const char * const gtkui_defaults[] = {
  "playlist_columns", "title artist album queued length",
  "playlist_headers", "TRUE",
  "show_remaining_time", "FALSE",
+ "step_size", "5",
 
  "player_x", "-1000",
  "player_y", "-1000",
@@ -95,9 +96,21 @@ AUD_IFACE_PLUGIN
     .prefs = & gtkui_prefs,
     .init = init,
     .cleanup = cleanup,
+
     .show = ui_show,
-    .run_gtk_plugin = (void (*) (void *, const char *)) layout_add,
-    .stop_gtk_plugin = (void (*) (void *)) layout_remove,
+    .run = gtk_main,
+    .quit = gtk_main_quit,
+
+    .show_about_window = audgui_show_about_window,
+    .hide_about_window = audgui_hide_about_window,
+    .show_filebrowser = audgui_run_filebrowser,
+    .hide_filebrowser = audgui_hide_filebrowser,
+    .show_jump_to_song = audgui_jump_to_track,
+    .hide_jump_to_song = audgui_jump_to_track_hide,
+    .show_prefs_window = audgui_show_prefs_window,
+    .hide_prefs_window = audgui_hide_prefs_window,
+    .plugin_menu_add = audgui_plugin_menu_add,
+    .plugin_menu_remove = audgui_plugin_menu_remove
 )
 
 static void save_window_size (void)
@@ -134,7 +147,7 @@ static bool_t window_delete()
     if (handle)
         return TRUE;
 
-    aud_drct_quit ();
+    aud_quit ();
     return TRUE;
 }
 
@@ -228,15 +241,7 @@ static void append_str (char * buf, int bufsize, const char * str)
 
 static void append_time_str (char * buf, int bufsize, int time)
 {
-    time /= 1000;
-
-    if (time < 3600)
-        snprintf (buf + strlen (buf), bufsize - strlen (buf),
-         aud_get_bool (NULL, "leading_zero") ? "%02d:%02d" : "%d:%02d",
-         time / 60, time % 60);
-    else
-        snprintf (buf + strlen (buf), bufsize - strlen (buf), "%d:%02d:%02d",
-         time / 3600, (time / 60) % 60, time % 60);
+    str_format_time (buf + strlen (buf), bufsize - strlen (buf), time);
 }
 
 static void set_time_label (int time, int len)
@@ -396,6 +401,12 @@ static void set_slider_length (int length)
         gtk_widget_hide (slider);
 }
 
+void update_step_size (void)
+{
+    double step_size = aud_get_double ("gtkui", "step_size");
+    gtk_range_set_increments ((GtkRange *) slider, step_size * 1000, step_size * 1000);
+}
+
 static void pause_cb (void)
 {
     gtk_tool_button_set_icon_name ((GtkToolButton *) button_play,
@@ -523,11 +534,11 @@ static bool_t window_keypress_cb (GtkWidget * widget, GdkEventKey * event, void 
             return TRUE;
         case GDK_KEY_Left:
             if (aud_drct_get_playing ())
-                do_seek (aud_drct_get_time () - 5000);
+                do_seek (aud_drct_get_time () - aud_get_double ("gtkui", "step_size") * 1000);
             return TRUE;
         case GDK_KEY_Right:
             if (aud_drct_get_playing ())
-                do_seek (aud_drct_get_time () + 5000);
+                do_seek (aud_drct_get_time () + aud_get_double ("gtkui", "step_size") * 1000);
             return TRUE;
         }
 
@@ -563,11 +574,11 @@ static bool_t window_keypress_cb (GtkWidget * widget, GdkEventKey * event, void 
         {
           case GDK_KEY_Left:
             if (aud_drct_get_playing ())
-                do_seek (aud_drct_get_time () - 5000);
+                do_seek (aud_drct_get_time () - aud_get_double ("gtkui", "step_size") * 1000);
             break;
           case GDK_KEY_Right:
             if (aud_drct_get_playing ())
-                do_seek (aud_drct_get_time () + 5000);
+                do_seek (aud_drct_get_time () + aud_get_double ("gtkui", "step_size") * 1000);
             break;
           default:
             return FALSE;
@@ -694,8 +705,43 @@ static void ui_hooks_disassociate(void)
     hook_dissociate ("config save", (HookFunction) config_save);
 }
 
+static bool_t add_dock_plugin (PluginHandle * plugin, void * unused)
+{
+    GtkWidget * widget = aud_plugin_get_widget (plugin);
+    if (widget)
+        layout_add (plugin, widget);
+
+    return TRUE;
+}
+
+static bool_t remove_dock_plugin (PluginHandle * plugin, void * unused)
+{
+    layout_remove (plugin);
+    return TRUE;
+}
+
+static void add_dock_plugins (void)
+{
+    aud_plugin_for_enabled (PLUGIN_TYPE_GENERAL, add_dock_plugin, NULL);
+    aud_plugin_for_enabled (PLUGIN_TYPE_VIS, add_dock_plugin, NULL);
+
+    hook_associate ("dock plugin enabled", (HookFunction) add_dock_plugin, NULL);
+    hook_associate ("dock plugin disabled", (HookFunction) remove_dock_plugin, NULL);
+}
+
+static void remove_dock_plugins (void)
+{
+    aud_plugin_for_enabled (PLUGIN_TYPE_GENERAL, remove_dock_plugin, NULL);
+    aud_plugin_for_enabled (PLUGIN_TYPE_VIS, remove_dock_plugin, NULL);
+
+    hook_dissociate ("dock plugin enabled", (HookFunction) add_dock_plugin);
+    hook_dissociate ("dock plugin disabled", (HookFunction) remove_dock_plugin);
+}
+
 static bool_t init (void)
 {
+    audgui_init ();
+
     search_tool = aud_plugin_lookup_basename ("search-tool");
 
     aud_config_set_defaults ("gtkui", gtkui_defaults);
@@ -749,12 +795,13 @@ static bool_t init (void)
     gtk_container_add ((GtkContainer *) boxitem1, box1);
 
     slider = gtk_scale_new (GTK_ORIENTATION_HORIZONTAL, NULL);
-    gtk_range_set_increments ((GtkRange *) slider, 5000, 5000);
     gtk_scale_set_draw_value(GTK_SCALE(slider), FALSE);
     gtk_widget_set_size_request(slider, 120, -1);
     gtk_widget_set_valign (slider, GTK_ALIGN_CENTER);
     gtk_widget_set_can_focus(slider, FALSE);
     gtk_box_pack_start ((GtkBox *) box1, slider, TRUE, TRUE, 6);
+
+    update_step_size ();
 
     label_time = markup_label_new(NULL);
     gtk_box_pack_end ((GtkBox *) box1, label_time, FALSE, FALSE, 6);
@@ -776,6 +823,7 @@ static bool_t init (void)
     gtk_container_add ((GtkContainer *) boxitem2, box2);
 
     volume = gtk_volume_button_new();
+    g_object_set ((GObject *) volume, "size", GTK_ICON_SIZE_LARGE_TOOLBAR, NULL);
     gtk_button_set_relief(GTK_BUTTON(volume), GTK_RELIEF_NONE);
     gtk_scale_button_set_adjustment(GTK_SCALE_BUTTON(volume), GTK_ADJUSTMENT(gtk_adjustment_new(0, 0, 100, 1, 5, 0)));
     gtk_widget_set_can_focus(volume, FALSE);
@@ -840,11 +888,15 @@ static bool_t init (void)
     menu_rclick = make_menu_rclick (accel);
     menu_tab = make_menu_tab (accel);
 
+    add_dock_plugins ();
+
     return TRUE;
 }
 
 static void cleanup (void)
 {
+    remove_dock_plugins ();
+
     if (menu_main)
         gtk_widget_destroy (menu_main);
 
@@ -876,6 +928,8 @@ static void cleanup (void)
 
     gtk_widget_destroy (window);
     layout_cleanup ();
+
+    audgui_cleanup ();
 }
 
 static void menu_position_cb (GtkMenu * menu, int * x, int * y, int * push, void * button)

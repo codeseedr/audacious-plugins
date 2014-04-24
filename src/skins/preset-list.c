@@ -28,8 +28,8 @@
 #include <string.h>
 #include <gtk/gtk.h>
 
-#include <audacious/drct.h>
-#include <audacious/i18n.h>
+#include <libaudcore/drct.h>
+#include <libaudcore/i18n.h>
 #include <libaudgui/libaudgui-gtk.h>
 
 #include "ui_equalizer.h"
@@ -308,7 +308,7 @@ static GtkWidget * equalizerwin_create_list_window (Index * preset_list,
     gtk_box_set_spacing(GTK_BOX(bbox), 5);
     gtk_box_pack_start(GTK_BOX(vbox), bbox, FALSE, FALSE, 0);
 
-    button_cancel = audgui_button_new (_("Cancel"), "window-close", NULL, NULL);
+    button_cancel = audgui_button_new (_("Cancel"), "process-stop", NULL, NULL);
     g_signal_connect_swapped (button_cancel, "clicked", (GCallback)
      gtk_widget_destroy, * window);
     gtk_box_pack_start(GTK_BOX(bbox), button_cancel, TRUE, TRUE, 0);

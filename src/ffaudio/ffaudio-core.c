@@ -31,9 +31,9 @@
 #undef FFAUDIO_NO_BLACKLIST /* Don't blacklist any recognized codecs/formats */
 
 #include "ffaudio-stdinc.h"
-#include <audacious/i18n.h>
-#include <audacious/input.h>
-#include <audacious/debug.h>
+#include <libaudcore/i18n.h>
+#include <libaudcore/input.h>
+#include <libaudcore/runtime.h>
 #include <audacious/audtag.h>
 #include <libaudcore/audstrings.h>
 
@@ -524,7 +524,11 @@ static gboolean ffaudio_play (const gchar * filename, VFSFile * file)
             if (seek_value >= 0)
                 break;
 
+#if CHECK_LIBAVCODEC_VERSION (55, 28, 1)
+            AVFrame * frame = av_frame_alloc ();
+#else
             AVFrame * frame = avcodec_alloc_frame ();
+#endif
             int decoded = 0;
             int len = avcodec_decode_audio4 (cinfo.context, frame, & decoded, & tmp);
 
@@ -557,7 +561,11 @@ static gboolean ffaudio_play (const gchar * filename, VFSFile * file)
             else
                 aud_input_write_audio (frame->data[0], size);
 
-            av_free (frame);
+#if CHECK_LIBAVCODEC_VERSION (55, 28, 1)
+            av_frame_free (& frame);
+#else
+            avcodec_free_frame (& frame);
+#endif
         }
 
         if (pkt.data)

@@ -25,9 +25,9 @@
 #include <dbus/dbus-glib-bindings.h>
 #include <glib-object.h>
 
-#include <audacious/drct.h>
-#include <audacious/plugin.h>
-#include <audacious/i18n.h>
+#include <libaudcore/drct.h>
+#include <libaudcore/plugin.h>
+#include <libaudcore/i18n.h>
 
 static gboolean init (void);
 static void cleanup (void);

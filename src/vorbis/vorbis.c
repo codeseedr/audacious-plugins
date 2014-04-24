@@ -37,10 +37,9 @@
 #include <vorbis/codec.h>
 #include <vorbis/vorbisfile.h>
 
-#include <audacious/i18n.h>
-#include <audacious/input.h>
-#include <audacious/misc.h>
-#include <audacious/plugin.h>
+#include <libaudcore/i18n.h>
+#include <libaudcore/input.h>
+#include <libaudcore/plugin.h>
 #include <libaudcore/audstrings.h>
 
 #include "vorbis.h"
@@ -79,64 +78,49 @@ ov_callbacks vorbis_callbacks_stream = {
     NULL
 };
 
-static gint
-vorbis_check_fd(const gchar *filename, VFSFile *stream)
+static bool_t vorbis_check_fd (const char * filename, VFSFile * file)
 {
-    OggVorbis_File vfile;
-    gint result;
+    ogg_sync_state oy = {0};
+    ogg_stream_state os = {0};
+    ogg_page og = {0};
+    ogg_packet op = {0};
 
-    /*
-     * The open function performs full stream detection and machine
-     * initialization.  If it returns zero, the stream *is* Vorbis and
-     * we're fully ready to decode.
-     */
+    bool_t result = FALSE;
 
-    memset(&vfile, 0, sizeof(vfile));
+    ogg_sync_init (& oy);
 
-    result = ov_test_callbacks (stream, & vfile, NULL, 0, vfs_is_streaming
-     (stream) ? vorbis_callbacks_stream : vorbis_callbacks);
+    while (1)
+    {
+        int64_t bytes = ogg_sync_pageseek (& oy, & og);
 
-    switch (result) {
-    case OV_EREAD:
-#ifdef DEBUG
-        g_message("** vorbis.c: Media read error: %s", filename);
-#endif
-        return FALSE;
-        break;
-    case OV_ENOTVORBIS:
-#ifdef DEBUG
-        g_message("** vorbis.c: Not Vorbis data: %s", filename);
-#endif
-        return FALSE;
-        break;
-    case OV_EVERSION:
-#ifdef DEBUG
-        g_message("** vorbis.c: Version mismatch: %s", filename);
-#endif
-        return FALSE;
-        break;
-    case OV_EBADHEADER:
-#ifdef DEBUG
-        g_message("** vorbis.c: Invalid Vorbis bistream header: %s",
-                  filename);
-#endif
-        return FALSE;
-        break;
-    case OV_EFAULT:
-#ifdef DEBUG
-        g_message("** vorbis.c: Internal logic fault while reading %s",
-                  filename);
-#endif
-        return FALSE;
-        break;
-    case 0:
-        break;
-    default:
-        break;
+        if (bytes < 0) /* skipped some bytes */
+            continue;
+        if (bytes > 0) /* got a page */
+            break;
+
+        void * buffer = ogg_sync_buffer (& oy, 2048);
+        bytes = vfs_fread (buffer, 1, 2048, file);
+
+        if (bytes <= 0)
+            goto end;
+
+        ogg_sync_wrote (& oy, bytes);
     }
 
-    ov_clear(&vfile);
-    return TRUE;
+    if (! ogg_page_bos (& og))
+        goto end;
+
+    ogg_stream_init (& os, ogg_page_serialno (& og));
+    ogg_stream_pagein (& os, & og);
+
+    if (ogg_stream_packetout (& os, & op) > 0 && vorbis_synthesis_idheader (& op))
+        result = TRUE;
+
+end:
+    ogg_sync_clear (& oy);
+    ogg_stream_clear (& os);
+
+    return result;
 }
 
 static void
@@ -439,37 +423,56 @@ static gboolean get_song_image (const gchar * filename, VFSFile * file,
     if (! comment)
         goto ERR;
 
-    const gchar * s = vorbis_comment_query (comment, "METADATA_BLOCK_PICTURE", 0);
-    if (! s)
-        goto ERR;
+    const gchar * s;
 
-    gsize length2;
-    void * data2 = g_base64_decode (s, & length2);
-    if (! data2 || length2 < 8)
-        goto PARSE_ERR;
+    if ((s = vorbis_comment_query (comment, "METADATA_BLOCK_PICTURE", 0)))
+    {
+        gsize length2;
+        void * data2 = g_base64_decode (s, & length2);
+        if (! data2 || length2 < 8)
+            goto PARSE_ERR;
 
-    gint mime_length = GUINT32_FROM_BE (* (guint32 *) (data2 + 4));
-    if (length2 < 8 + mime_length + 4)
-        goto PARSE_ERR;
+        gint mime_length = GUINT32_FROM_BE (* (guint32 *) (data2 + 4));
+        if (length2 < 8 + mime_length + 4)
+            goto PARSE_ERR;
 
-    gint desc_length = GUINT32_FROM_BE (* (guint32 *) (data2 + 8 + mime_length));
-    if (length2 < 8 + mime_length + 4 + desc_length + 20)
-        goto PARSE_ERR;
+        gint desc_length = GUINT32_FROM_BE (* (guint32 *) (data2 + 8 + mime_length));
+        if (length2 < 8 + mime_length + 4 + desc_length + 20)
+            goto PARSE_ERR;
 
-    * size = GUINT32_FROM_BE (* (guint32 *) (data2 + 8 + mime_length + 4 + desc_length + 16));
-    if (length2 < 8 + mime_length + 4 + desc_length + 20 + * size)
-        goto PARSE_ERR;
+        * size = GUINT32_FROM_BE (* (guint32 *) (data2 + 8 + mime_length + 4 + desc_length + 16));
+        if (length2 < 8 + mime_length + 4 + desc_length + 20 + * size)
+            goto PARSE_ERR;
 
-    * data = g_malloc (* size);
-    memcpy (* data, (char *) data2 + 8 + mime_length + 4 + desc_length + 20, * size);
+        * data = g_memdup ((char *) data2 + 8 + mime_length + 4 + desc_length + 20, * size);
 
-    g_free (data2);
-    ov_clear (& vfile);
-    return TRUE;
+        g_free (data2);
+        ov_clear (& vfile);
+        return TRUE;
 
-PARSE_ERR:
-    fprintf (stderr, "vorbis: Error parsing METADATA_BLOCK_PICTURE in %s.\n", filename);
-    g_free (data2);
+    PARSE_ERR:
+        fprintf (stderr, "vorbis: Error parsing METADATA_BLOCK_PICTURE in %s.\n", filename);
+        g_free (data2);
+    }
+
+    if ((s = vorbis_comment_query (comment, "COVERART", 0)))
+    {
+        gsize length2;
+        void * data2 = g_base64_decode (s, & length2);
+
+        if (! data2 || ! length2)
+        {
+            fprintf (stderr, "vorbis: Error parsing COVERART in %s.\n", filename);
+            g_free (data2);
+            goto ERR;
+        }
+
+        * data = data2;
+        * size = length2;
+
+        ov_clear (& vfile);
+        return TRUE;
+    }
 
 ERR:
     ov_clear (& vfile);

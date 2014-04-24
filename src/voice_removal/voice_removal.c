@@ -18,8 +18,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <audacious/i18n.h>
-#include <audacious/plugin.h>
+#include <libaudcore/i18n.h>
+#include <libaudcore/plugin.h>
 
 static int voice_channels;
 
@@ -33,18 +33,13 @@ static void voice_process(float **d, int *samples)
 	float *f = *d, *end;
 	end = *d + *samples;
 
-	if (voice_channels != 2 || samples == 0)
+	if (voice_channels != 2)
 		return;
 
 	for (f = *d; f < end; f += 2)
 	{
-		float left, right;
-
-		left = (f[1] - f[0]);
-		right = (f[0] - f[1]);
-
-		f[0] = left;
-		f[1] = right;
+		f[0] -= f[1];
+		f[1] = f[0];
 	}
 }
 
@@ -59,5 +54,6 @@ AUD_EFFECT_PLUGIN
 	.domain = PACKAGE,
 	.start = voice_start,
 	.process = voice_process,
-	.finish = voice_finish
+	.finish = voice_finish,
+	.preserves_format = TRUE
 )

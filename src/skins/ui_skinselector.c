@@ -24,8 +24,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <audacious/i18n.h>
-#include <audacious/misc.h>
+#include <libaudcore/i18n.h>
+#include <libaudcore/runtime.h>
+#include <libaudcore/runtime.h>
 #include <libaudgui/libaudgui-gtk.h>
 
 #include "plugin.h"

@@ -20,15 +20,16 @@
 
 #include <stdlib.h>
 
-#include <audacious/drct.h>
-#include <audacious/i18n.h>
-#include <audacious/misc.h>
-#include <audacious/plugin.h>
+#include <libaudcore/drct.h>
+#include <libaudcore/i18n.h>
+#include <libaudcore/runtime.h>
+#include <libaudcore/plugin.h>
 #include <libaudcore/hook.h>
 #include <libaudgui/libaudgui.h>
 
 #include "menus.h"
 #include "plugin.h"
+#include "plugin-window.h"
 #include "preset-browser.h"
 #include "preset-list.h"
 #include "skins_cfg.h"
@@ -51,10 +52,22 @@ AUD_IFACE_PLUGIN
     .init = skins_init,
     .cleanup = skins_cleanup,
     .prefs = & skins_prefs,
-    .show = view_show_player
-)
 
-static gboolean plugin_is_active = FALSE;
+    .show = view_show_player,
+    .run = gtk_main,
+    .quit = gtk_main_quit,
+
+    .show_about_window = audgui_show_about_window,
+    .hide_about_window = audgui_hide_about_window,
+    .show_filebrowser = audgui_run_filebrowser,
+    .hide_filebrowser = audgui_hide_filebrowser,
+    .show_jump_to_song = audgui_jump_to_track,
+    .hide_jump_to_song = audgui_jump_to_track_hide,
+    .show_prefs_window = audgui_show_prefs_window,
+    .hide_prefs_window = audgui_hide_prefs_window,
+    .plugin_menu_add = audgui_plugin_menu_add,
+    .plugin_menu_remove = audgui_plugin_menu_remove
+)
 
 static gint update_source;
 
@@ -95,8 +108,7 @@ static gboolean update_cb (void * unused)
 
 static gboolean skins_init (void)
 {
-    plugin_is_active = TRUE;
-    g_log_set_handler(NULL, G_LOG_LEVEL_WARNING, g_log_default_handler, NULL);
+    audgui_init ();
 
     skins_init_paths();
     skins_cfg_load();
@@ -121,29 +133,30 @@ static gboolean skins_init (void)
 
     update_source = g_timeout_add (250, update_cb, NULL);
 
+    create_plugin_windows ();
+
     return TRUE;
 }
 
 static void skins_cleanup (void)
 {
-    if (plugin_is_active)
-    {
-        mainwin_unhook ();
-        playlistwin_unhook ();
-        g_source_remove (update_source);
+    destroy_plugin_windows ();
 
-        skins_cfg_save();
+    mainwin_unhook ();
+    playlistwin_unhook ();
+    g_source_remove (update_source);
 
-        cleanup_skins();
-        skins_free_paths();
+    skins_cfg_save();
 
-        eq_preset_browser_cleanup ();
-        eq_preset_list_cleanup ();
+    cleanup_skins();
+    skins_free_paths();
 
-        menu_cleanup ();
+    eq_preset_browser_cleanup ();
+    eq_preset_list_cleanup ();
 
-        plugin_is_active = FALSE;
-    }
+    menu_cleanup ();
+
+    audgui_cleanup ();
 }
 
 bool_t handle_window_close (void)
@@ -152,7 +165,7 @@ bool_t handle_window_close (void)
     hook_call ("window close", & handled);
 
     if (! handled)
-        aud_drct_quit ();
+        aud_quit ();
 
     return TRUE;
 }

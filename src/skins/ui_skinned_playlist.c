@@ -37,9 +37,10 @@
 #include "ui_skinned_playlist.h"
 #include "ui_skinned_playlist_slider.h"
 
-#include <audacious/drct.h>
-#include <audacious/misc.h>
-#include <audacious/playlist.h>
+#include <libaudcore/audstrings.h>
+#include <libaudcore/drct.h>
+#include <libaudcore/runtime.h>
+#include <libaudcore/playlist.h>
 #include <libaudgui/libaudgui.h>
 
 enum {DRAG_SELECT = 1, DRAG_MOVE};
@@ -217,13 +218,12 @@ DRAW_FUNC_BEGIN (playlist_draw)
     for (gint i = data->first; i < data->first + data->rows && i <
      active_length; i ++)
     {
-        gint len = aud_playlist_entry_get_length (active_playlist, i, TRUE);
-        gchar buf[16];
+        int len = aud_playlist_entry_get_length (active_playlist, i, TRUE);
+        if (len <= 0)
+            continue;
 
-        if (len > 0)
-            snprintf (buf, sizeof buf, "%d:%02d", len / 60000, len / 1000 % 60);
-        else
-            buf[0] = 0;
+        char buf[16];
+        str_format_time (buf, sizeof buf, len);
 
         layout = gtk_widget_create_pango_layout (wid, buf);
         pango_layout_set_font_description (layout, data->font);

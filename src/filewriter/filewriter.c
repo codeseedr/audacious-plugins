@@ -23,12 +23,10 @@
 #include <gtk/gtk.h>
 #include <stdlib.h>
 
-#include <audacious/misc.h>
-#include <audacious/playlist.h>
-#include <audacious/preferences.h>
+#include <libaudcore/runtime.h>
+#include <libaudcore/playlist.h>
+#include <libaudcore/preferences.h>
 #include <libaudcore/audstrings.h>
-#include <libaudgui/libaudgui.h>
-#include <libaudgui/libaudgui-gtk.h>
 
 #include "filewriter.h"
 #include "plugins.h"

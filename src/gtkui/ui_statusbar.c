@@ -18,18 +18,19 @@
  */
 
 #include <glib.h>
-#include <audacious/i18n.h>
+#include <libaudcore/i18n.h>
 #include <gdk/gdk.h>
 #include <gdk/gdkkeysyms.h>
 #include <gtk/gtk.h>
 #include <string.h>
-#include <inttypes.h>
 #include <unistd.h>
 #include <errno.h>
 
-#include <audacious/drct.h>
-#include <audacious/playlist.h>
+#include <libaudcore/drct.h>
+#include <libaudcore/playlist.h>
+#include <libaudcore/audstrings.h>
 #include <libaudcore/hook.h>
+#include <libaudgui/libaudgui.h>
 
 #include "ui_statusbar.h"
 
@@ -38,26 +39,12 @@
 static void ui_statusbar_update_playlist_length (void * unused, GtkWidget * label)
 {
     int playlist = aud_playlist_get_active ();
-    int64_t selection = aud_playlist_get_selected_length (playlist) / 1000;
-    int64_t total = aud_playlist_get_total_length (playlist) / 1000;
 
-    char buf[64];
-    buf[0] = 0;
+    char s1[16], s2[16];
+    str_format_time (s1, sizeof s1, aud_playlist_get_selected_length (playlist));
+    str_format_time (s2, sizeof s2, aud_playlist_get_total_length (playlist));
 
-    if (selection >= 3600)
-        APPEND (buf, "%" PRId64 ":%02" PRId64 ":%02" PRId64,
-         selection / 3600, selection / 60 % 60, selection % 60);
-    else
-        APPEND (buf, "%" PRId64 ":%02" PRId64,
-         selection / 60, selection % 60);
-
-    if (total >= 3600)
-        APPEND (buf, "/%" PRId64 ":%02" PRId64 ":%02" PRId64,
-         total / 3600, total / 60 % 60, total % 60);
-    else
-        APPEND (buf, "/%" PRId64 ":%02" PRId64,
-         total / 60, total % 60);
-
+    SCONCAT3 (buf, s1, " / ", s2);
     gtk_label_set_text ((GtkLabel *) label, buf);
 }
 
@@ -134,18 +121,17 @@ GtkWidget * ui_statusbar_new (void)
 {
     GtkWidget * hbox = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 3);
     GtkWidget * status = gtk_widget_new (GTK_TYPE_LABEL, "xalign", 0.0, NULL);
+    GtkWidget * length = gtk_widget_new (GTK_TYPE_LABEL, "xalign", 1.0, NULL);
 
     gtk_label_set_ellipsize ((GtkLabel *) status, PANGO_ELLIPSIZE_END);
     gtk_box_pack_start ((GtkBox *) hbox, status, TRUE, TRUE, 5);
+    gtk_box_pack_start ((GtkBox *) hbox, length, FALSE, FALSE, 5);
+
+    ui_statusbar_update_playlist_length (NULL, length);
 
     hook_associate ("playback ready", (HookFunction) ui_statusbar_info_change, status);
     hook_associate ("info change", (HookFunction) ui_statusbar_info_change, status);
     hook_associate ("playback stop", (HookFunction) ui_statusbar_playback_stop, status);
-
-    GtkWidget * length = gtk_widget_new (GTK_TYPE_LABEL, "xalign", 1.0, NULL);
-    gtk_box_pack_start ((GtkBox *) hbox, length, FALSE, FALSE, 5);
-    ui_statusbar_update_playlist_length (NULL, length);
-
     hook_associate ("playlist activate", (HookFunction) ui_statusbar_update_playlist_length, length);
     hook_associate ("playlist update", (HookFunction) ui_statusbar_update_playlist_length, length);
 

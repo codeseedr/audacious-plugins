@@ -44,6 +44,7 @@ AC_MSG_CHECKING([operating system type])
 
 HAVE_LINUX=no
 HAVE_MSWINDOWS=no
+HAVE_DARWIN=no
 
 case "$target" in
     *linux*)
@@ -54,6 +55,10 @@ case "$target" in
         AC_MSG_RESULT(Windows)
         HAVE_MSWINDOWS=yes
         ;;
+    *darwin*)
+        AC_MSG_RESULT(Darwin)
+        HAVE_DARWIN=yes
+        ;;
     *)
         AC_MSG_RESULT(other UNIX)
         ;;
@@ -61,6 +66,7 @@ esac
 
 AC_SUBST(HAVE_MSWINDOWS)
 AC_SUBST(HAVE_LINUX)
+AC_SUBST(HAVE_DARWIN)
 
 dnl Enable "-Wl,-z,defs" only on Linux
 dnl ==================================
@@ -93,7 +99,20 @@ dnl =======================
 
 PKG_CHECK_MODULES(GLIB, glib-2.0 >= 2.32)
 PKG_CHECK_MODULES(GMODULE, gmodule-2.0 >= 2.32)
-PKG_CHECK_MODULES(GTK, gtk+-3.0 >= 3.4)
+
+dnl GTK+ support
+dnl =============
+
+AC_ARG_ENABLE(gtk,
+ AS_HELP_STRING(--disable-gtk, [Disable GTK+ support (default=enabled)]),
+ USE_GTK=$enableval, USE_GTK=yes)
+
+if test $USE_GTK = yes ; then
+    PKG_CHECK_MODULES(GTK, gtk+-3.0 >= 3.4)
+    AC_DEFINE(USE_GTK, 1, [Define if GTK+ support enabled])
+fi
+
+AC_SUBST(USE_GTK)
 
 if test $HAVE_MSWINDOWS = yes ; then
     PKG_CHECK_MODULES(GIO, gio-2.0 >= 2.32)

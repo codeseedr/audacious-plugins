@@ -19,8 +19,8 @@
 
 #include "gtkui.h"
 
-#include <audacious/i18n.h>
-#include <audacious/preferences.h>
+#include <libaudcore/i18n.h>
+#include <libaudcore/preferences.h>
 
 #include "ui_playlist_notebook.h"
 #include "ui_playlist_widget.h"
@@ -48,6 +48,9 @@ static PreferencesWidget gtkui_widgets[] = {
      .cfg_type = VALUE_BOOLEAN, .csect = "gtkui", .cname = "playlist_headers",
      .callback = redisplay_playlists},
     {WIDGET_LABEL, N_("<b>Miscellaneous</b>")},
+    {WIDGET_SPIN_BTN, N_("Arrow keys seek by:"),
+     .cfg_type = VALUE_FLOAT, .csect = "gtkui", .cname = "step_size",
+     .callback= update_step_size, .data.spin_btn = {0.1, 60, 0.1, N_("seconds")}},
     {WIDGET_CHK_BTN, N_("Scroll on song change"),
      .cfg_type = VALUE_BOOLEAN, .csect = "gtkui", .cname = "autoscroll"}
 };

@@ -30,8 +30,8 @@
 
 #include <gtk/gtk.h>
 
-#include <audacious/debug.h>
-#include <audacious/misc.h>
+#include <libaudcore/runtime.h>
+#include <libaudcore/runtime.h>
 
 #include "plugin.h"
 #include "skins_cfg.h"

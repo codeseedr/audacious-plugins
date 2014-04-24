@@ -29,11 +29,12 @@
 #include <gdk/gdkkeysyms.h>
 #include <gtk/gtk.h>
 
-#include <audacious/debug.h>
-#include <audacious/drct.h>
-#include <audacious/i18n.h>
-#include <audacious/misc.h>
-#include <audacious/playlist.h>
+#include <libaudcore/runtime.h>
+#include <libaudcore/drct.h>
+#include <libaudcore/i18n.h>
+#include <libaudcore/runtime.h>
+#include <libaudcore/playlist.h>
+#include <libaudcore/audstrings.h>
 #include <libaudcore/hook.h>
 #include <libaudgui/libaudgui.h>
 
@@ -57,6 +58,8 @@
 #define PLAYLISTWIN_WIDTH_SNAP          25
 #define PLAYLISTWIN_HEIGHT_SNAP         29
 #define PLAYLISTWIN_SHADED_HEIGHT       MAINWIN_SHADED_HEIGHT
+
+#define APPEND(b, ...) snprintf (b + strlen (b), sizeof b - strlen (b), __VA_ARGS__)
 
 gint active_playlist = -1, active_length = 0;
 gchar * active_title = NULL;
@@ -89,31 +92,12 @@ static gboolean song_changed;
 
 static void playlistwin_update_info (void)
 {
-    gchar *text, *sel_text, *tot_text;
-    gint64 selection, total;
+    char s1[16], s2[16];
+    str_format_time (s1, sizeof s1, aud_playlist_get_selected_length (active_playlist));
+    str_format_time (s2, sizeof s2, aud_playlist_get_total_length (active_playlist));
 
-    total = aud_playlist_get_total_length (active_playlist) / 1000;
-    selection = aud_playlist_get_selected_length (active_playlist) / 1000;
-
-    if (selection >= 3600)
-        sel_text = g_strdup_printf ("%" PRId64 ":%02" PRId64 ":%02" PRId64,
-        selection / 3600, selection / 60 % 60, selection % 60);
-    else
-        sel_text = g_strdup_printf ("%" PRId64 ":%02" PRId64,
-        selection / 60, selection % 60);
-
-    if (total >= 3600)
-        tot_text = g_strdup_printf ("%" PRId64 ":%02" PRId64 ":%02" PRId64,
-        total / 3600, total / 60 % 60, total % 60);
-    else
-        tot_text = g_strdup_printf ("%" PRId64 ":%02" PRId64,
-        total / 60, total % 60);
-
-    text = g_strconcat(sel_text, "/", tot_text, NULL);
-    textbox_set_text (playlistwin_info, text);
-    g_free(text);
-    g_free(tot_text);
-    g_free(sel_text);
+    SCONCAT3 (buf, s1, "/", s2);
+    textbox_set_text (playlistwin_info, buf);
 }
 
 static void update_rollup_text (void)
@@ -129,16 +113,18 @@ static void update_rollup_text (void)
         gint length = aud_playlist_entry_get_length (playlist, entry, TRUE);
 
         if (aud_get_bool (NULL, "show_numbers_in_pl"))
-            snprintf (scratch, sizeof scratch, "%d. ", 1 + entry);
+            APPEND (scratch, "%d. ", 1 + entry);
 
         gchar * title = aud_playlist_entry_get_title (playlist, entry, TRUE);
-        snprintf (scratch + strlen (scratch), sizeof scratch - strlen (scratch),
-         "%s", title);
+        APPEND (scratch, "%s", title);
         str_unref (title);
 
         if (length > 0)
-            snprintf (scratch + strlen (scratch), sizeof scratch - strlen
-             (scratch), " (%d:%02d)", length / 60000, length / 1000 % 60);
+        {
+            char buf[16];
+            str_format_time (buf, sizeof buf, length);
+            APPEND (scratch, " (%s)", buf);
+        }
     }
 
     textbox_set_text (playlistwin_sinfo, scratch);
@@ -484,7 +470,8 @@ playlistwin_press(GtkWidget * widget,
                   GdkEventButton * event,
                   gpointer callback_data)
 {
-    if (event->button == 1 && event->type == GDK_2BUTTON_PRESS && event->y < 14)
+    if (event->button == 1 && event->type == GDK_2BUTTON_PRESS &&
+     event->window == gtk_widget_get_window (widget) && event->y < 14)
         playlistwin_shade_toggle();
     else if (event->button == 3)
         menu_popup (UI_MENU_PLAYLIST, event->x_root, event->y_root, FALSE, FALSE, 3, event->time);

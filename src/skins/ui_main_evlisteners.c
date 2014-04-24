@@ -20,10 +20,11 @@
 
 #include <math.h>
 
-#include <audacious/drct.h>
-#include <audacious/i18n.h>
-#include <audacious/misc.h>
+#include <libaudcore/drct.h>
 #include <libaudcore/hook.h>
+#include <libaudcore/i18n.h>
+#include <libaudcore/interface.h>
+#include <libaudcore/runtime.h>
 
 #include "skins_cfg.h"
 #include "ui_main.h"

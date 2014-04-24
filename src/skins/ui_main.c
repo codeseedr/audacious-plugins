@@ -31,9 +31,9 @@
 #include <gdk/gdkkeysyms.h>
 #include <gtk/gtk.h>
 
-#include <audacious/drct.h>
-#include <audacious/i18n.h>
-#include <audacious/misc.h>
+#include <libaudcore/drct.h>
+#include <libaudcore/i18n.h>
+#include <libaudcore/runtime.h>
 #include <libaudcore/audstrings.h>
 #include <libaudgui/libaudgui.h>
 
@@ -111,24 +111,31 @@ static void mainwin_set_volume_diff (gint diff);
 
 static void format_time (gchar buf[7], gint time, gint length)
 {
-    if (aud_get_bool ("skins", "show_remaining_time") && length > 0)
+    bool_t zero = aud_get_bool (NULL, "leading_zero");
+    bool_t remaining = aud_get_bool ("skins", "show_remaining_time");
+
+    if (remaining && length > 0)
     {
-        if (length - time < 60000)         /* " -0:SS" */
-            snprintf (buf, 7, " -0:%02d", (length - time) / 1000);
-        else if (length - time < 6000000)  /* "-MM:SS" */
-            snprintf (buf, 7, "%3d:%02d", (time - length) / 60000, (length - time) / 1000 % 60);
-        else                               /* "-HH:MM" */
-            snprintf (buf, 7, "%3d:%02d", (time - length) / 3600000, (length - time) / 60000 % 60);
+        time = (length - time) / 1000;
+
+        if (time < 60)
+            snprintf (buf, 7, zero ? "-00:%02d" : " -0:%02d", time);
+        else if (time < 6000)
+            snprintf (buf, 7, zero ? "%03d:%02d" : "%3d:%02d", -time / 60, time % 60);
+        else
+            snprintf (buf, 7, "%3d:%02d", -time / 3600, time / 60 % 60);
     }
     else
     {
-        if (time < 60000000)  /* MMM:SS */
-            snprintf (buf, 7, "%3d:%02d", time / 60000, time / 1000 % 60);
-        else                  /* HHH:MM */
-            snprintf (buf, 7, "%3d:%02d", time / 3600000, time / 60000 % 60);
-    }
+        time /= 1000;
 
-    buf[3] = 0;
+        if (time < 6000)
+            snprintf (buf, 7, zero ? " %02d:%02d" : " %2d:%02d", time / 60, time % 60);
+        else if (time < 60000)
+            snprintf (buf, 7, "%3d:%02d", time / 60, time % 60);
+        else
+            snprintf (buf, 7, "%3d:%02d", time / 3600, time / 60 % 60);
+    }
 }
 
 void mainwin_set_shape (void)
@@ -240,15 +247,18 @@ mainwin_set_song_title(const gchar * title)
 
 static void setup_widget (GtkWidget * widget, gint x, gint y, gboolean show)
 {
-    GtkRequisition size;
-    gtk_widget_get_preferred_size (widget, & size, NULL);
-
     /* leave no-show-all widgets alone (they are shown/hidden elsewhere) */
     if (! gtk_widget_get_no_show_all (widget))
     {
+        int width, height;
+
+        /* use get_size_request(), not get_preferred_size() */
+        /* get_preferred_size() will return 0x0 for hidden widgets */
+        gtk_widget_get_size_request (widget, & width, & height);
+
         /* hide widgets that are outside the window boundary */
-        if (x < 0 || x + size.width > active_skin->properties.mainwin_width ||
-         y < 0 || y + size.height > active_skin->properties.mainwin_height)
+        if (x < 0 || x + width > active_skin->properties.mainwin_width ||
+         y < 0 || y + height > active_skin->properties.mainwin_height)
             show = FALSE;
 
         gtk_widget_set_visible (widget, show);
@@ -303,6 +313,8 @@ void mainwin_refresh_hints (void)
         window_set_size (mainwin, p->mainwin_width, p->mainwin_height);
 }
 
+/* note that the song info is not translated since it is displayed using
+ * the skinned bitmap font, which supports only the English alphabet */
 void mainwin_set_song_info (gint bitrate, gint samplerate, gint channels)
 {
     gchar scratch[32];
@@ -331,23 +343,22 @@ void mainwin_set_song_info (gint bitrate, gint samplerate, gint channels)
     ui_skinned_monostereo_set_num_channels (mainwin_monostereo, channels);
 
     if (bitrate > 0)
-        snprintf (scratch, sizeof scratch, "%d %s", bitrate / 1000, _("kbps"));
+        snprintf (scratch, sizeof scratch, "%d kbps", bitrate / 1000);
     else
         scratch[0] = 0;
 
     if (samplerate > 0)
     {
         length = strlen (scratch);
-        snprintf (scratch + length, sizeof scratch - length, "%s%d %s", length ?
-         ", " : "", samplerate / 1000, _("kHz"));
+        snprintf (scratch + length, sizeof scratch - length, "%s%d kHz", length ?
+         ", " : "", samplerate / 1000);
     }
 
     if (channels > 0)
     {
         length = strlen (scratch);
         snprintf (scratch + length, sizeof scratch - length, "%s%s", length ?
-         ", " : "", channels > 2 ? _("surround") : channels > 1 ? _("stereo") :
-         _("mono"));
+         ", " : "", channels > 2 ? "surround" : channels > 1 ? "stereo" : "mono");
     }
 
     textbox_set_text (mainwin_othertext, scratch);
@@ -422,7 +433,8 @@ mainwin_mouse_button_press(GtkWidget * widget,
                            GdkEventButton * event,
                            gpointer callback_data)
 {
-    if (event->button == 1 && event->type == GDK_2BUTTON_PRESS && event->y < 14)
+    if (event->button == 1 && event->type == GDK_2BUTTON_PRESS &&
+     event->window == gtk_widget_get_window (widget) && event->y < 14)
     {
         mainwin_shade_toggle ();
         return TRUE;

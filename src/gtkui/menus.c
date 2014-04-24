@@ -20,11 +20,13 @@
 #include <gdk/gdkkeysyms.h>
 #include <gtk/gtk.h>
 
-#include <audacious/drct.h>
-#include <audacious/i18n.h>
-#include <audacious/misc.h>
-#include <audacious/playlist.h>
+#include <libaudcore/drct.h>
+#include <libaudcore/i18n.h>
+#include <libaudcore/interface.h>
+#include <libaudcore/playlist.h>
+#include <libaudcore/runtime.h>
 #include <libaudgui/libaudgui.h>
+#include <libaudgui/libaudgui-gtk.h>
 #include <libaudgui/menu.h>
 
 #include "gtkui.h"
@@ -43,8 +45,8 @@ static void open_url (void) {audgui_show_add_url_window (TRUE); }
 static void add_files (void) {audgui_run_filebrowser (FALSE); }
 static void add_url (void) {audgui_show_add_url_window (FALSE); }
 
-static void configure_effects (void) {aud_show_prefs_for_plugin_type (PLUGIN_TYPE_EFFECT); }
-static void configure_visualizations (void) {aud_show_prefs_for_plugin_type (PLUGIN_TYPE_VIS); }
+static void configure_effects (void) {audgui_show_prefs_for_plugin_type (PLUGIN_TYPE_EFFECT); }
+static void configure_visualizations (void) {audgui_show_prefs_for_plugin_type (PLUGIN_TYPE_VIS); }
 
 static void pl_sort_track (void) {aud_playlist_sort_by_scheme (aud_playlist_get_active (), PLAYLIST_SORT_TRACK); }
 static void pl_sort_title (void) {aud_playlist_sort_by_scheme (aud_playlist_get_active (), PLAYLIST_SORT_TITLE); }
@@ -106,8 +108,8 @@ static void pl_tab_close (void)
         audgui_confirm_playlist_delete (playlist);
 }
 
-static GtkWidget * get_services_main (void) {return aud_get_plugin_menu (AUD_MENU_MAIN); }
-static GtkWidget * get_services_pl (void) {return aud_get_plugin_menu (AUD_MENU_PLAYLIST); }
+static GtkWidget * get_services_main (void) {return audgui_get_plugin_menu (AUD_MENU_MAIN); }
+static GtkWidget * get_services_pl (void) {return audgui_get_plugin_menu (AUD_MENU_PLAYLIST); }
 
 static void volume_up (void)
 {
@@ -132,8 +134,8 @@ static const AudguiMenuItem file_items[] = {
  {N_("Search _Library"), "edit-find", 'y', CTRL, .func = activate_search_tool},
  {.sep = TRUE},
  {N_("A_bout ..."), "help-about", .func = audgui_show_about_window},
- {N_("_Settings ..."), "preferences-system", .func = aud_show_prefs_window},
- {N_("_Quit"), "application-exit", 'q', CTRL, .func = aud_drct_quit}};
+ {N_("_Settings ..."), "preferences-system", .func = audgui_show_prefs_window},
+ {N_("_Quit"), "application-exit", 'q', CTRL, .func = aud_quit}};
 
 static const AudguiMenuItem playback_items[] = {
  {N_("_Play"), "media-playback-start", GDK_KEY_Return, CTRL, .func = aud_drct_play},

@@ -24,10 +24,10 @@
 
 #include <gio/gio.h>
 
-#include <audacious/i18n.h>
-#include <audacious/misc.h>
-#include <audacious/plugin.h>
 #include <libaudcore/audstrings.h>
+#include <libaudcore/i18n.h>
+#include <libaudcore/interface.h>
+#include <libaudcore/plugin.h>
 
 typedef struct {
     GFile * file;
@@ -39,7 +39,7 @@ typedef struct {
 
 #define gio_error(...) do { \
     SPRINTF (gio_error_buf, __VA_ARGS__); \
-    aud_interface_show_error (gio_error_buf); \
+    aud_ui_show_error (gio_error_buf); \
 } while (0)
 
 #define CHECK_ERROR(op, name) do { \

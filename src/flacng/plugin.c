@@ -21,10 +21,10 @@
 #include <string.h>
 #include <glib.h>
 
-#include <audacious/debug.h>
-#include <audacious/i18n.h>
-#include <audacious/input.h>
-#include <audacious/plugin.h>
+#include <libaudcore/runtime.h>
+#include <libaudcore/i18n.h>
+#include <libaudcore/input.h>
+#include <libaudcore/plugin.h>
 
 #include "flacng.h"
 

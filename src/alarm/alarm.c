@@ -34,11 +34,11 @@
 #include <assert.h>
 #include <math.h>
 
-#include <audacious/debug.h>
-#include <audacious/drct.h>
-#include <audacious/i18n.h>
-#include <audacious/misc.h>
-#include <audacious/plugin.h>
+#include <libaudcore/drct.h>
+#include <libaudcore/i18n.h>
+#include <libaudcore/interface.h>
+#include <libaudcore/plugin.h>
+#include <libaudcore/runtime.h>
 #include <libaudgui/libaudgui-gtk.h>
 
 #include "alarm.h"

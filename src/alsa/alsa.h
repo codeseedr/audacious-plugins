@@ -21,14 +21,15 @@
 #define AUDACIOUS_ALSA_H
 
 #include <stdio.h>
-#include <audacious/misc.h>
+
 #include <libaudcore/audstrings.h>
+#include <libaudcore/interface.h>
 
 #define ERROR(...) fprintf (stderr, "alsa: " __VA_ARGS__)
 
 #define ERROR_NOISY(...) do { \
     SPRINTF (ERROR_NOISY_buf, "ALSA error: " __VA_ARGS__); \
-    aud_interface_show_error (ERROR_NOISY_buf); \
+    aud_ui_show_error (ERROR_NOISY_buf); \
 } while (0)
 
 #define CHECK_VAL(value, function, ...) \
