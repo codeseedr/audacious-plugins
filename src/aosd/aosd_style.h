@@ -21,22 +21,19 @@
 #ifndef _I_AOSD_STYLE_H
 #define _I_AOSD_STYLE_H 1
 
-#undef PACKAGE
-#define PACKAGE "audacious-plugins"
-
 #include "aosd_common.h"
 #include <glib.h>
 
 
 /* decoration style public API */
-void aosd_deco_style_get_codes_array ( gint ** , gint * );
-void aosd_deco_style_get_padding ( gint , gint * , gint * , gint * , gint * );
-const gchar * aosd_deco_style_get_desc ( gint );
-gint aosd_deco_style_get_numcol ( gint );
-void aosd_deco_style_render ( gint , gpointer , gpointer , gpointer ); /* opaque */
+void aosd_deco_style_get_codes_array ( int ** , int * );
+void aosd_deco_style_get_padding ( int , int * , int * , int * , int * );
+const char * aosd_deco_style_get_desc ( int );
+int aosd_deco_style_get_numcol ( int );
+void aosd_deco_style_render ( int , void * , void * , void * ); /* opaque */
 
-gint aosd_deco_style_get_first_code ( void );
-gint aosd_deco_style_get_max_numcol ( void );
+int aosd_deco_style_get_first_code ( void );
+int aosd_deco_style_get_max_numcol ( void );
 
 
 #endif /* !_I_AOSD_STYLE_H */

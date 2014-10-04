@@ -32,11 +32,6 @@
 #include "FIFO.h"
 #include "MMU.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-
 /*******************************************************************************
     this structure is for display control,
     it holds flags for general display
@@ -394,13 +389,14 @@ typedef struct _reg_dispx {
 
 
 
-
+#ifndef __cplusplus
 #ifndef min
 #define min(a,b) (((a)<(b))?(a):(b))
 #endif
 
 #ifndef max
 #define max(a,b) (((a)>(b))?(a):(b))
+#endif
 #endif
 
 typedef BOOL (*fun_gl_Begin) (int screen);
@@ -547,7 +543,7 @@ typedef struct
 /*12*/    unsigned PaletteIndex:4;
 /*10*/    unsigned Priority:2;
 // attr3
-unsigned attr3:16;    
+unsigned attr3:16;
 #else
 // attr0
 /* 0*/	unsigned Y:8;
@@ -804,10 +800,6 @@ void GPU_setBLDALPHA_EVA(GPU *gpu, u8 val);
 void GPU_setBLDALPHA_EVB(GPU *gpu, u8 val);
 
 void GPU_setBLDY_EVY	(GPU *gpu, u8 val);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif
 

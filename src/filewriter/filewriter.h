@@ -24,34 +24,33 @@
 #define FILEWRITER_H
 
 #include <gtk/gtk.h>
-#include <stdio.h>
 #include <string.h>
 
 #include <libaudcore/plugin.h>
 #include <libaudcore/i18n.h>
 
 struct format_info {
-    gint format;
+    int format;
     int frequency;
     int channels;
 };
 
 extern struct format_info input;
 
-extern VFSFile *output_file;
-extern guint64 offset;
-extern Tuple * tuple;
+extern VFSFile output_file;
+extern uint64_t offset;
+extern Tuple tuple;
 
-typedef gint (*write_output_callback)(void *ptr, gint length);
+typedef int (*write_output_callback)(void *ptr, int length);
 
-typedef struct _FileWriter
+struct FileWriterImpl
 {
     void (*init)(write_output_callback write_output_func);
     void (*configure)(void);
-    gint (*open)(void);
-    void (*write)(void *ptr, gint length);
+    int (*open)(void);
+    void (*write)(void *ptr, int length);
     void (*close)(void);
     int (*format_required)(int fmt);
-} FileWriter;
+};
 
 #endif

@@ -21,20 +21,6 @@
 
 #include <jack/jack.h>
 
-#ifdef __cplusplus
-extern "C" {
-#else
-#define bool long
-#endif
-
-#ifndef TRUE
-#define TRUE 1
-#endif
-
-#ifndef FALSE
-#define FALSE 0
-#endif
-
 #define ERR_SUCCESS                           0
 #define ERR_OPENING_JACK                      1
 #define ERR_RATE_MISMATCH                     2
@@ -120,7 +106,7 @@ int  JACK_GetNumOutputChannels(int deviceID);
 
 long JACK_GetSampleRate(int deviceID); /* samples per second */
 
-void JACK_SetClientName(char *name); /* sets the name that bio2jack will use when
+void JACK_SetClientName(const char *name); /* sets the name that bio2jack will use when
                                         creating a new jack client.  name_%pid%_%deviceID%%counter%
                                         will be used
                                         NOTE: this defaults to name = bio2jack
@@ -137,9 +123,5 @@ enum JACK_PORT_CONNECTION_MODE
 /* set the mode for port connections */
 /* defaults to CONNECT_ALL */
 void JACK_SetPortConnectionMode(enum JACK_PORT_CONNECTION_MODE mode);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif /* #ifndef JACK_OUT_H */

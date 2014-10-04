@@ -1,5 +1,5 @@
 dnl Add $1 to CFLAGS and CXXFLAGS if supported
-dnl ------------------------------------------
+dnl ==========================================
 
 AC_DEFUN([AUD_CHECK_CFLAGS],[
     AC_MSG_CHECKING([whether the C/C++ compiler supports $1])
@@ -15,24 +15,29 @@ AC_DEFUN([AUD_CHECK_CFLAGS],[
     ])
 ])
 
+dnl Add $1 to CXXFLAGS if supported
+dnl ===============================
+
+AC_DEFUN([AUD_CHECK_CXXFLAGS],[
+    AC_MSG_CHECKING([whether the C++ compiler supports $1])
+    AC_LANG_PUSH([C++])
+    OLDCXXFLAGS="$CXXFLAGS"
+    CXXFLAGS="$CXXFLAGS $1 -Werror"
+    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([],[return 0;])],[
+        AC_MSG_RESULT(yes)
+        CXXFLAGS="$OLDCXXFLAGS $1"
+    ],[
+        AC_MSG_RESULT(no)
+        CXXFLAGS="$OLDCXXFLAGS"
+    ])
+    AC_LANG_POP([C++])
+])
+
 
 dnl **
 dnl ** Common checks
 dnl **
 AC_DEFUN([AUD_COMMON_PROGS], [
-
-dnl Check for C and C++ compilers
-dnl =============================
-AC_REQUIRE([AC_PROG_CC])
-AC_REQUIRE([AC_PROG_CXX])
-AC_REQUIRE([AC_C_BIGENDIAN])
-AC_REQUIRE([AC_SYS_LARGEFILE])
-
-if test "x$GCC" = "xyes"; then
-    CFLAGS="$CFLAGS -std=gnu99 -ffast-math -Wall -pipe"
-    CXXFLAGS="$CXXFLAGS -Wall -pipe"
-    AUD_CHECK_CFLAGS(-Wtype-limits)
-fi
 
 dnl Check platform
 dnl ==============
@@ -68,6 +73,37 @@ AC_SUBST(HAVE_MSWINDOWS)
 AC_SUBST(HAVE_LINUX)
 AC_SUBST(HAVE_DARWIN)
 
+dnl Check for C and C++ compilers
+dnl =============================
+AC_REQUIRE([AC_PROG_CC])
+AC_REQUIRE([AC_PROG_CXX])
+AC_REQUIRE([AC_C_BIGENDIAN])
+AC_REQUIRE([AC_SYS_LARGEFILE])
+
+if test "x$GCC" = "xyes"; then
+    CFLAGS="$CFLAGS -std=gnu99 -ffast-math -Wall -pipe"
+    if test "x$HAVE_DARWIN" = "xyes"; then
+        CXXFLAGS="$CXXFLAGS -stdlib=libc++ -std=gnu++11 -ffast-math -Wall -pipe"
+        LDFLAGS="$LDFLAGS -lc++ -stdlib=libc++"
+    else
+        CXXFLAGS="$CXXFLAGS -std=gnu++11 -ffast-math -Wall -pipe"
+    fi
+    AUD_CHECK_CFLAGS(-Wtype-limits)
+    AUD_CHECK_CXXFLAGS(-Woverloaded-virtual)
+fi
+
+dnl On Mac, check for Objective-C and -C++ compilers
+dnl ================================================
+
+if test "x$HAVE_DARWIN" = "xyes"; then
+    AC_PROG_OBJC
+    AC_PROG_OBJCPP
+    AC_PROG_OBJCXX
+    AC_PROG_OBJCXXCPP
+
+    OBJCXXFLAGS="$OBJCXXFLAGS -stdlib=libc++ -std=c++11"
+fi
+
 dnl Enable "-Wl,-z,defs" only on Linux
 dnl ==================================
 if test $HAVE_LINUX = yes ; then
@@ -79,6 +115,26 @@ dnl ===================================
 if test $HAVE_MSWINDOWS = yes ; then
 	CFLAGS="$CFLAGS -march=i686"
 fi
+
+dnl Byte order
+dnl ==========
+AC_C_BIGENDIAN([BIGENDIAN=1], [BIGENDIAN=0],
+ [AC_MSG_ERROR([Unknown machine byte order])],
+ [AC_MSG_ERROR([Universal builds are not supported, sorry])])
+AC_SUBST([BIGENDIAN])
+
+dnl Prevent symbol collisions
+dnl =========================
+if test "x$HAVE_MSWINDOWS" = "xyes" ; then
+    EXPORT="__declspec(dllexport)"
+elif test "x$GCC" = "xyes" ; then
+    CFLAGS="$CFLAGS -fvisibility=hidden"
+    CXXFLAGS="$CXXFLAGS -fvisibility=hidden"
+    EXPORT="__attribute__((visibility(\"default\")))"
+else
+    AC_MSG_ERROR([Unknown syntax for EXPORT keyword])
+fi
+AC_DEFINE_UNQUOTED([EXPORT], [$EXPORT], [Define to compiler syntax for public symbols])
 
 dnl Checks for various programs
 dnl ===========================
@@ -108,7 +164,7 @@ AC_ARG_ENABLE(gtk,
  USE_GTK=$enableval, USE_GTK=yes)
 
 if test $USE_GTK = yes ; then
-    PKG_CHECK_MODULES(GTK, gtk+-3.0 >= 3.4)
+    PKG_CHECK_MODULES(GTK, gtk+-2.0 >= 2.24)
     AC_DEFINE(USE_GTK, 1, [Define if GTK+ support enabled])
 fi
 
@@ -128,5 +184,24 @@ AC_SUBST(GMODULE_CFLAGS)
 AC_SUBST(GMODULE_LIBS)
 AC_SUBST(GTK_CFLAGS)
 AC_SUBST(GTK_LIBS)
+
+dnl Qt support
+dnl ==========
+
+AC_ARG_ENABLE(qt,
+ AS_HELP_STRING(--enable-qt, [Enable Qt support (default=disabled)]),
+ USE_QT=$enableval, USE_QT=no)
+
+if test $USE_QT = yes ; then
+    PKG_CHECK_MODULES([QT], [Qt5Core Qt5Gui Qt5Widgets])
+    AC_DEFINE(USE_QT, 1, [Define if Qt support enabled])
+
+    # needed if Qt was built with -reduce-relocations
+    QT_CFLAGS="$QT_CFLAGS -fPIC"
+fi
+
+AC_SUBST(USE_QT)
+AC_SUBST(QT_CFLAGS)
+AC_SUBST(QT_LIBS)
 
 ])

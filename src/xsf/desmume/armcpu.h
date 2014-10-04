@@ -26,10 +26,6 @@
 #include "bits.h"
 #include "MMU.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #define ARMCPU_ARM7 1
 #define ARMCPU_ARM9 0
 
@@ -249,8 +245,8 @@ static INLINE void NDS_makeARM9Int(u32 num)
         /* generate the interrupt if enabled */
 	if ((MMU.reg_IE[0] & (1 << num)) && MMU.reg_IME[0])
 	{
-		NDS_ARM9.wIRQ = TRUE;
-		NDS_ARM9.waitIRQ = FALSE;
+		NDS_ARM9.wIRQ = true;
+		NDS_ARM9.waitIRQ = false;
 	}
 }
 
@@ -262,8 +258,8 @@ static INLINE void NDS_makeARM7Int(u32 num)
         /* generate the interrupt if enabled */
 	if ((MMU.reg_IE[1] & (1 << num)) && MMU.reg_IME[1])
 	{
-		NDS_ARM7.wIRQ = TRUE;
-		NDS_ARM7.waitIRQ = FALSE;
+		NDS_ARM7.wIRQ = true;
+		NDS_ARM7.waitIRQ = false;
 	}
 }
 
@@ -279,10 +275,5 @@ static INLINE void NDS_makeInt(u8 proc_ID,u32 num)
 			break ;
 	}
 }
-
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

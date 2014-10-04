@@ -9,9 +9,7 @@
 
 #include <string>
 
-extern "C" {
 #include <libaudcore/plugin.h>
-}
 
 #include "settings.h"
 
@@ -48,11 +46,11 @@ public:
     ModplugXMMS();
     ~ModplugXMMS();
 
-    bool CanPlayFileFromVFS(const std::string& aFilename, VFSFile *file);
+    bool CanPlayFileFromVFS(const std::string& aFilename, VFSFile &file);
 
     bool PlayFile(const std::string& aFilename);
 
-    Tuple* GetSongTuple(const std::string& aFilename);
+    Tuple GetSongTuple(const std::string& aFilename);
 
     void SetModProps(const ModplugSettings& aModProps);
 

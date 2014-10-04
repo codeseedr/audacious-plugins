@@ -2,11 +2,13 @@ include ../../extra.mk
 
 PLUGIN = sndfile${PLUGIN_SUFFIX}
 
-SRCS = plugin.c
+SRCS = plugin.cc
 
 include ../../buildsys.mk
 
 plugindir := ${plugindir}/${INPUT_PLUGIN_DIR}
+
+LD = ${CXX}
 
 CFLAGS += ${PLUGIN_CFLAGS}
 CPPFLAGS += ${PLUGIN_CPPFLAGS} ${GLIB_CFLAGS} ${SNDFILE_CFLAGS} -I../..

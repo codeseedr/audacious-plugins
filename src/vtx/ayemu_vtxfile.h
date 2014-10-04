@@ -1,7 +1,6 @@
 #ifndef _AYEMU_vtxfile_h
 #define _AYEMU_vtxfile_h
 
-#include <glib.h>
 #include <inttypes.h>
 #include <libaudcore/plugin.h>
 #include "ayemu_8912.h"
@@ -14,8 +13,6 @@
 #define AYEMU_VTX_NTSTRING_MAX 255
 
 typedef char NTstring[AYEMU_VTX_NTSTRING_MAX+1];
-
-BEGIN_C_DECLS
 
 /** VTX file format header and status of open file
  * \internal
@@ -52,7 +49,7 @@ struct VTXFileHeader
  */
 typedef struct
 {
-  VFSFile *fp;			/**< opening .vtx file pointer */
+  VFSFile fp;			/**< opening .vtx file pointer */
   struct VTXFileHeader hdr;  	/**< VTX header data */
   char *regdata;		/**< unpacked song data */
   int pos;			/**< current data frame offset */
@@ -67,7 +64,7 @@ typedef struct
 EXTERN int ayemu_vtx_open (ayemu_vtx_t *vtx, const char *filename);
 
 /** Read and encode lha data from .vtx file.
- * \return Return pointer to unpacked data or NULL.
+ * \return Return pointer to unpacked data or nullptr.
  */
 EXTERN char *ayemu_vtx_load_data (ayemu_vtx_t *vtx);
 
@@ -76,7 +73,7 @@ EXTERN char *ayemu_vtx_load_data (ayemu_vtx_t *vtx);
  */
 EXTERN int ayemu_vtx_get_next_frame (ayemu_vtx_t *vtx, char *regs);
 
-/** Print formated file name. If fmt is NULL the default format %a - %t will used
+/** Print formated file name. If fmt is nullptr the default format %a - %t will used
  * \return none.
  */
 EXTERN void ayemu_vtx_sprintname (const ayemu_vtx_t *vtx, char *buf, const int sz, const char *fmt);
@@ -87,7 +84,5 @@ EXTERN void ayemu_vtx_sprintname (const ayemu_vtx_t *vtx, char *buf, const int s
 EXTERN void ayemu_vtx_free (ayemu_vtx_t *vtx);
 
 /*@}*/
-
-END_C_DECLS
 
 #endif

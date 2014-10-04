@@ -1,11 +1,13 @@
 PLUGIN = notify${PLUGIN_SUFFIX}
 
-SRCS = event.c notify.c osd.c
+SRCS = event.cc notify.cc osd.cc
 
 include ../../buildsys.mk
 include ../../extra.mk
 
 plugindir := ${plugindir}/${GENERAL_PLUGIN_DIR}
+
+LD = ${CXX}
 
 CPPFLAGS += -I../.. ${PLUGIN_CPPFLAGS} ${GTK_CFLAGS} ${NOTIFY_CFLAGS}
 CFLAGS += ${PLUGIN_CFLAGS}

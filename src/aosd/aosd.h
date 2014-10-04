@@ -21,14 +21,10 @@
 #ifndef _I_AOSD_H
 #define _I_AOSD_H 1
 
-#undef PACKAGE
-#define PACKAGE "audacious-plugins"
-
 #include "aosd_common.h"
 #include <glib.h>
-#include <libaudcore/plugin.h>
 
-gboolean aosd_init (void);
+bool aosd_init (void);
 void aosd_cleanup ( void );
 void aosd_configure ( void );
 
