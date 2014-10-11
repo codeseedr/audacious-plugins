@@ -1,14 +1,16 @@
 
 #include <sys/wait.h>
 #include <signal.h>
-
+#include <stdlib.h>
+#include <string.h>
 #include <glib.h>
 
+#include <libaudcore/i18n.h>
 #include <libaudcore/plugin.h>
 #include <libaudcore/playlist.h>
-#include <libaudcore/hook.h>
 #include <libaudcore/interface.h>
 #include <libaudcore/audstrings.h>
+#include <libaudgui/libaudgui.h>
 #include <libaudgui/libaudgui-gtk.h>
 
 static const int menus[] = {AUD_MENU_MAIN, AUD_MENU_PLAYLIST};
@@ -22,7 +24,7 @@ static void open_dir_fm(char *dir)
 {
     //falling back to MIME type handler detected by xdg-open
     char *cmd = "xdg-open";
-    char *argv[3] = {cmd, dir, NULL};
+    char * const argv[3] = {cmd, dir, NULL};
 
     signal(SIGCHLD, bury_child);
 
@@ -49,22 +51,18 @@ static void show_playlist_entries(void)
         if (!aud_playlist_entry_get_selected(playlist, i))
             continue;
 
-        char *uri = aud_playlist_entry_get_filename(playlist, i);
-        char *filename = uri_to_filename(uri);
+        String uri = aud_playlist_entry_get_filename(playlist, i);
+        StringBuf filename = uri_to_filename(uri);
 
         if (!filename)
         {
-            SPRINTF(error, "Unable to show %s in File Manager: not a local file.", uri);
-            aud_ui_show_error(error);
+            aud_ui_show_error(_("Unable to show %s in File Manager: not a local file."));
         }
         else
         {
             if (!dir_to_show)
                 dir_to_show = g_path_get_dirname(filename);
         }
-
-        str_unref(filename);
-        str_unref(uri);
 
         if (dir_to_show)
             break;
@@ -73,25 +71,25 @@ static void show_playlist_entries(void)
     open_dir_fm(dir_to_show);
 }
 
-static bool_t init(void)
+static bool sfm_init(void)
 {
-    for (int i = 0; i < G_N_ELEMENTS (menus); i ++)
+    for (uint i = 0; i < G_N_ELEMENTS (menus); i ++)
         aud_plugin_menu_add (menus[i], show_playlist_entries,
             "Show in File Manager", "folder");
 
     return TRUE;
 }
 
-static void cleanup(void)
+static void sfm_cleanup(void)
 {
-    for (int i = 0; i < G_N_ELEMENTS (menus); i ++)
+    for (uint i = 0; i < G_N_ELEMENTS (menus); i ++)
         aud_plugin_menu_remove(menus[i], show_playlist_entries);
 }
 
-AUD_GENERAL_PLUGIN
-(
-    .name = "Show in File Manager",
-    .domain = PACKAGE,
-    .init = init,
-    .cleanup = cleanup,
-)
+#define AUD_PLUGIN_NAME        N_("Show in File Manager")
+#define AUD_PLUGIN_INIT        sfm_init
+#define AUD_PLUGIN_CLEANUP     sfm_cleanup
+
+#define AUD_DECLARE_GENERAL
+#include <libaudcore/plugin-declare.h>
+
